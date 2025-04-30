@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  --primary-color: #bc2836;
+  --primary-color-dark: #de1e31;
+
+  color-scheme: light dark;
+  color: rgba(36, 36, 36, 0.87);
+  background-color: #f5f5f5;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+h3,
+h4 {
+  font-weight: 500;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+h5,
+h6 {
+  font-weight: 400;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+p:not(:first-child) {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.25s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+.bg-edomex {
+  background-color: var(--primary-color);
+}
+.color-edomex {
+  color: var(--primary-color);
+}
+
+.button-edomex {
+  background: var(--primary-color);
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.button-edomex:hover {
+  background-color: var(--primary-color-dark);
+}
+
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-block: 20px;
+  border-radius: 10px;
+}
+
+table th {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 10px;
+  text-align: left;
+
+  &:first-child {
+    border-top-left-radius: 10px;
+  }
+
+  &:last-child {
+    border-top-right-radius: 10px;
+  }
+}
+
+table td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--primary-color);
+}

@@ -1,0 +1,15 @@
+REDIS_HOST=localhost
+REDIS_PORT=6380
+REDIS_DB=0
+
+
+OPENAI_API_KEY=sk-pro
+
+# Optional
+MODEL=gemma3:27b
+PROVIDER=ollama
+
+
+PORT=8005
+
+ALLOWED_ORIGINS="http://localhost:5174,localhost:8004,http://localhost:5173"
