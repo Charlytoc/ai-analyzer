@@ -3,6 +3,7 @@ from fastapi import APIRouter, UploadFile, File, Form
 import shutil
 import os
 from typing import List
+from fastapi import HTTPException
 
 from server.utils.printer import Printer
 from server.utils.redis_cache import RedisCache
@@ -16,8 +17,6 @@ os.makedirs(f"{UPLOADS_PATH}/documents", exist_ok=True)
 router = APIRouter(prefix="/api")
 printer = Printer("ROUTES")
 redis_cache = RedisCache()
-
-from fastapi import HTTPException
 
 
 @router.post("/generate-sentence-brief")
