@@ -117,3 +117,32 @@ table td {
   text-align: left;
   border-bottom: 1px solid var(--primary-color);
 }
+
+.markdown-container {
+  line-height: 1.2;
+  > blockquote {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    margin-block: 10px;
+  }
+
+  > ul {
+    list-style-type: disc;
+    margin-left: 20px;
+
+    & li {
+      list-style-position: inside;
+    }
+  }
+
+  > ol {
+    list-style-type: decimal;
+    margin-left: 20px;
+
+    & li {
+      list-style-position: inside;
+    }
+  }
+}
