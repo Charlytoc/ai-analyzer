@@ -93,8 +93,7 @@ def get_faq_results(doc_hash: str):
     return results_str
 
 
-DEFAULT_WARNING_TEXT = """
-Este sistema es solo una herramienta de apoyo y no sustituye el asesoramiento legal profesional. La información proporcionada por el sistema no debe considerarse como un consejo legal y no se garantiza su precisión o exhaustividad. Se recomienda consultar a un abogado calificado para obtener asesoramiento legal específico y adaptado a su situación particular.
+DEFAULT_WARNING_TEXT = """> Este sistema es solo una herramienta de apoyo y no sustituye el asesoramiento legal profesional. La información proporcionada por el sistema no debe considerarse como un consejo legal y no se garantiza su precisión o exhaustividad. Se recomienda consultar a un abogado calificado para obtener asesoramiento legal específico y adaptado a su situación particular.
 """
 
 
