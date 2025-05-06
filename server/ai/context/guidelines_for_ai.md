@@ -1,4 +1,10 @@
-# Sentencias Ciudadanas realizadas por IA.
+<!-- Guía para la IA: Usa toda la información de este archivo para ayudarte a elaborar la sentencia ciudadana final en base a los documentos que luego se te van a proporcionar. Este archivo es solo infomación de cómo hacer tu tarea correctamente. -->
+
+# Cómo debería una IA elaborar una sentencia ciudadana
+
+Primero entendamos que es una sentencia ciudadana.
+
+Una sentencia ciudadana es básicamente el resumen punto por punto del resultado de una sentencia judicial. Es tomar un montón de documentos y resumirlos en un documento corto y directo que cualquier persona pueda entender sin importar su formación jurídica.
 
 ## Elementos Técnicos de una Sentencia, formalidad legal.
 
@@ -28,50 +34,51 @@ Una sentencia judicial del Poder Judicial del Estado de México está integrada 
 - Indican con claridad qué se concede o niega, qué se ordena hacer o no hacer.
 - Tienen fuerza obligatoria para las partes.
 
-5. Firma y sello
-   Debe contener la firma del juez o jueza que la emite, así como del secretario judicial.
+5. Validez
+   Para que una sentencia emitida por un tribunal sea válida, debe contener:
 
-- Sello oficial del juzgado.
-- O Firma Electrónica Judicial del estado de México, FEJEM, de juez y secretario de acuerdos.
+   - Firma y sello
+     Debe contener la firma del juez o jueza que la emite, así como del secretario judicial. Esto solamente te da información de si es una sentencia oficial o no y NO es relevante para la sentencia ciudadana.
+   - Sello oficial del juzgado.
+   - O Firma Electrónica Judicial del estado de México, FEJEM, de juez y secretario de acuerdos.
+
+   Los datos de validez solo son importantes para ti, pero NO los incluyas en la sentencia ciudadana, puesto que eso ya es de conocimiento del usuario.
+
+# EJEMPLOS:
 
 ## Sentencia en versión simple, “Sentencia Ciudadana” que elementos o como se debe redactar
 
-Una sentencia ciudadana es una modalidad de sentencia escrita en un lenguaje claro, accesible y comprensible para cualquier persona, especialmente para las partes involucradas que no tienen formación jurídica. Su objetivo es acercar la justicia a la ciudadanía, promoviendo la transparencia, la rendición de cuentas y el acceso efectivo a la justicia; por lo que una sentencia ciudadana debe incluir:
+Una sentencia ciudadana es una modalidad de sentencia escrita en un lenguaje claro, accesible y comprensible para cualquier persona que no tenga formación jurídica, especialmente para las partes involucradas en el proceso. Su objetivo es acercar la justicia a la ciudadanía, promoviendo la transparencia, la rendición de cuentas y el acceso efectivo a la justicia; por lo que una sentencia ciudadana debe incluir:
 
-1. Lenguaje claro
+1. Un primer apartado (que pueda asimilarse al encabezado de la sentencia formal), en el que se indique en un párrafo breve y estructurado de forma muy simple:
 
-- Evita tecnicismos jurídicos o los explica si son necesarios.
-- Frases cortas y estructuradas de forma simple.
-- Tono directo y comprensible.
+- El tribunal que dictó la sentencia,
+- El lugar y fecha en que se dictó la sentencia,
+- El número de expediente,
+- El tipo de procedimiento que se resuelve (Teniendo en cuenta que procedimiento =controversia =juicio =proceso =litigio),
+- Si se trata de una sentencia interlocutoria o definitiva (Teniendo en cuenta que una sentencia definitiva decide el fondo del litigio en lo principal; y una sentencia interlocutoria decide un incidente o alguna cuestión procesal).
 
-2. Resumen de los hechos
+2. Un segundo apartado (que pueda asimilarse a los resultandos de la sentencia formal), en el que se indique en párrafos breves, frases cortas, con tono directo y comprensible:
 
-- ¿Qué pasó?
-- ¿Quiénes están involucrados?
-- ¿Qué piden las partes?
+- Las partes involucradas en el procedimiento (Teniendo en cuenta que, cuando la demanda se promueve ‘por propio derecho’ el actor-promovente es el titular del derecho; y cuando la demanda se promueve ‘en mi carácter de representante legal’ o ‘apoderado legal’, el actor sigue siendo la persona titular del derecho litigioso, no el abogado patrono, ni el representante legal, ni el apoderado legal. Además, en los juicios civiles, familiares, mercantiles y laborales, las partes son actor y demandado; y en los juicios penales las partes son víctima e imputado) (No sé si este sea el lugar y momento oportuno para explicarle cuál es la diferencia entre actor y demandado, imputado y víctima u ofendido, etc.; y sobre todo, la diferencia entre el promovente principal y su representante legal),
+- La acción intentada,
+- El motivo de la controversia y las prestaciones reclamadas,
+- Los hechos relevantes del caso (que incluya tanto los hechos narrados por el actor en su demanda, como los invocados en contraposición por el demandado en su contestación),
 
-3. Preguntas clave del caso
+3.- Un tercer apartado (que pueda asimilarse a los considerandos de la sentencia formal), en el que se indique en párrafos breves, frases cortas, con tono directo y comprensible, evitando el uso de tecnicismos jurídicos, aunque si resultan estrictamente necesarios para comprender la sentencia, deberás mencionarlos e inmediatamente después explicarlos entre paréntesis:
 
-- ¿Qué se tenía que decidir?
-- ¿Cuáles eran los puntos en discusión?
+- La cuestión jurídica a resolver o los puntos jurídicos a discusión,
+- Las pruebas desahogadas en el juicio, con las que el tribunal tuvo por demostrados los hechos controvertidos por las partes,
+- La decisión del tribunal (La "ratio decidendi", es la razón jurídica fundamental que sustenta una decisión del tribunal. La "ratio decidendi" es la norma general o principio jurídico que el tribunal aplica para resolver un caso concreto y que forma la base de su decisión; es decir, es el fundamento legal que justifica la sentencia. Para identificarla, es necesario analizar la sentencia en su totalidad, identificar la cuestión legal que se resuelve, el razonamiento jurídico del tribunal y la regla legal que se aplica para tomar la decisión y crear una norma jurídica individualizada),
+- Explicar que en un juicio “nadie gana ni pierde”; sino que se adjudica, asigna, se reconoce o se otorga un derecho a la persona que demostró tener la razón legal conforme a las pruebas presentadas en el procedimiento,
 
-4. Valoración de pruebas y argumentos
+4.- Un cuarto apartado (que pueda asimilarse a los puntos resolutivos de la sentencia formal), en el que se indique en párrafos breves, frases cortas, con tono directo y comprensible, evitando el uso de tecnicismos jurídicos, aunque si resultan estrictamente necesarios para comprender la sentencia, deberás mencionarlos e inmediatamente después explicarlos entre paréntesis:
 
-- ¿Qué pruebas se presentaron?
-- ¿Qué peso tuvieron?
-- ¿Qué argumentos fueron convincentes o no, y por qué?
+- Las órdenes específicas del tribunal en los puntos resolutivos,
+- Las consecuencias o “pasos a seguir” que se derivan de la sentencia y el tiempo para cumplirla,
+- Si se aprecia el uso de firma electrónica del tribunal, o en su caso, alguna certificación secretarial al pie de la sentencia, que la autorice como copia íntegra e inalterada de la sentencia original, que le otorgue validez oficial o legal,
+- Si no se aprecia el uso de firma electrónica o certificación secretarial, poner una advertencia final que indique: “No se aprecia uso de firma electrónica del tribunal, ni tampoco certificación alguna por parte del personal del tribunal; por lo que no se puede asegurar su validez legal”,
 
-5. Fundamento de la decisión
 
-- Explicación sencilla de la norma legal aplicada.
-- Cómo se interpretó la ley en el caso concreto.
-
-6. Conclusión o decisión
-
-- ¿Qué resolvió el juez?
-- ¿Quién ganó o qué se ordena hacer?
-- ¿Qué sigue después de esta sentencia?
-
-7. Firma y datos de identificación
-
-- Nombre del juzgador, juzgado y fecha.
+Usa siempre formato markdown para la sentencia ciudadana, de forma que se pueda comprender fácilmente la estructura del documento.
+<!-- Fin de los ejemplos -->

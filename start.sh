@@ -56,7 +56,7 @@ source $ACTIVATE_CMD
 echo "✅ Entorno virtual activado."
 
 echo "📦 Instalando dependencias desde requirements.txt..."
-pip install -r requirements.txt
+pip install -r requirements.txt -q
 echo "✅ Dependencias instaladas."
 
 # Solo en modo desarrollo corre React
@@ -89,6 +89,8 @@ chroma run --path media/vector_storage/ --port 8004 &
 
 echo "🚀 Esperando a que el servidor de Chroma esté listo..."
 sleep 5
+
+export ENVIRONMENT=$MODE
 
 echo "🚀 Iniciando la aplicación FastAPI..."
 python main.py

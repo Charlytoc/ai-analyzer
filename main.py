@@ -13,23 +13,26 @@ from server.utils.printer import Printer
 from server.routes import router
 
 printer = Printer("MAIN")
-ENVIRONMENT = os.getenv("ENVIRONMENT", "prod")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "prod").lower().strip()
 
+printer.green("🚀 Iniciando aplicación en modo: ", ENVIRONMENT)
 # Crear carpetas necesarias
 os.makedirs("uploads/images", exist_ok=True)
 os.makedirs("uploads/documents", exist_ok=True)
+os.makedirs("uploads/documents/read", exist_ok=True)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    printer.yellow("Checking ollama installation")
+    printer.yellow("🔍 Verificando instalación de Ollama")
     result = check_ollama_installation()
     if result["installed"]:
-        printer.green("Ollama is installed")
+        printer.green("🟢 Ollama está instalado")
         printer.green("Ollama version: ", result["version"])
         printer.green("Ollama server running: ", result["server_running"])
     else:
-        printer.red("Ollama is not installed, please install it first")
+        printer.red("🔴 Ollama no está instalado, por favor instálalo primero")
+
     yield
 
 
@@ -47,7 +50,7 @@ else:
         "PELIGRO: ALLOWED_ORIGINS es *, cualquier origen puede acceder a la API."
     )
     if ENVIRONMENT == "prod":
-        raise Exception("ALLOWED_ORIGINS is * en producción")
+        raise Exception("ALLOWED_ORIGINS es * en producción")
     ALLOWED_ORIGINS = "*"
 
 
@@ -71,48 +74,56 @@ app.add_middleware(
 
 @app.middleware("http")
 async def auth_and_cors(request: Request, call_next):
-    printer.green("Receiving a request. Headers: ", request.headers)
+    # printer.green("Receiving a request. Headers: ", request.headers)
     origin = request.headers.get("origin")
     if origin:
         if ALLOWED_ORIGINS != "*" and origin not in ALLOWED_ORIGINS:
+            printer.yellow(f"Origin '{origin}' no permitido.")
             return JSONResponse(
                 status_code=403, content={"detail": f"Origin '{origin}' no permitido."}
             )
     else:
         client_ip = request.client.host
         if len(ALLOWED_IPS) > 0 and client_ip not in ALLOWED_IPS:
+            printer.yellow(f"IP '{client_ip}' no permitida.")
             return JSONResponse(
                 status_code=403, content={"detail": f"IP '{client_ip}' no permitida."}
             )
 
-    auth: str = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        return JSONResponse(
-            status_code=401,
-            content={"detail": "Missing or malformed Authorization header."},
-        )
-    token = auth.split(" ", 1)[1]
+    CHECK_AUTH = ENVIRONMENT == "prod"
+    if CHECK_AUTH:
+        auth: str = request.headers.get("Authorization", "")
+        if not auth.startswith("Bearer "):
+            printer.yellow("No se encontró el token en el header")
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Missing or malformed Authorization header."},
+            )
+        token = auth.split(" ", 1)[1]
 
-    validate_url = os.getenv(
-        "TOKEN_VALIDATION_URL",
-        "https://declaraciones.pjedomex.gob.mx/declaraciones/gestion",
-    )
-
-    payload = {"access_token": token}
-    printer.yellow("Validating token: ", payload)
-    async with httpx.AsyncClient(timeout=10) as client:
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
-        resp = await client.post(validate_url, data=payload, headers=headers)
-
-        body = urlencode(payload)
-        resp = await client.post(validate_url, data=body, headers=headers)
-    if resp.status_code != 200:
-        return JSONResponse(
-            status_code=401, content={"detail": "Invalid or expired token."}
+        validate_url = os.getenv(
+            "TOKEN_VALIDATION_URL",
+            "https://declaraciones.pjedomex.gob.mx/declaraciones/gestion",
         )
 
-    printer.green("Request allowed, headers: ", request.headers)
+        payload = {"access_token": token}
+        printer.yellow("Validando token...")
+        async with httpx.AsyncClient(timeout=10) as client:
+            headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+            resp = await client.post(validate_url, data=payload, headers=headers)
+
+            body = urlencode(payload)
+            resp = await client.post(validate_url, data=body, headers=headers)
+        if resp.status_code != 200:
+            return JSONResponse(
+                status_code=401, content={"detail": "Invalid or expired token."}
+            )
+    else:
+        printer.yellow(
+            "No se validó el token, se asume que es un request de desarrollo"
+        )
+    printer.green("Una solicitud fue permitida con éxito")
     return await call_next(request)
 
 

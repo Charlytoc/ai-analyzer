@@ -20,7 +20,7 @@ export const FileUploader: React.FC<Props> = ({ onUploadSuccess }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [images, setImages] = useState<FileList | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [useCache, setUseCache] = useState(false);
+  const [useCache, setUseCache] = useState(true);
   const [systemPrompt, setSystemPrompt] = useState("");
 
   const [documents, setDocuments] = useState<FileList | null>(null);

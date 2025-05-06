@@ -2,6 +2,8 @@ import os
 import hashlib
 import json
 
+from typing import Literal
+from pydantic import BaseModel, Field, field_validator
 from server.utils.pdf_reader import DocumentReader
 from server.utils.printer import Printer
 from server.utils.redis_cache import RedisCache
@@ -14,37 +16,56 @@ EXPIRATION_TIME = 60 * 60 * 24 * 30  # 30 days
 SYSTEM_PROMPT = os.getenv("SYSTEM_PROMPT", None)
 LIMIT_CHARACTERS_FOR_FILE = 50000
 
+CONTEXT_DIR = os.getenv("CONTEXT_DIR", "server/ai/context")
+FAQ_FILE_PATH = os.path.join(CONTEXT_DIR, "FAQ.txt")
+SYSTEM_PROMPT_FILE_PATH = os.path.join(CONTEXT_DIR, "SYSTEM.txt")
+
 printer = Printer("ROUTES")
 redis_cache = RedisCache()
+
+
+class DataSource(BaseModel):
+    type: Literal["document", "image"]
+    name: str
+    content: str
+    hash: str = Field(default="")
+
+    @field_validator("hash", mode="after", check_fields=False)
+    def compute_hash(cls, v, info):
+        txt = info.data.get("content", "")
+        return hashlib.sha256(txt.encode("utf-8")).hexdigest()
 
 
 def hasher(text: str):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def get_faq_questions():
-    return [
-        "¿Cuál es el número de expediente?",
-        "¿Qué tribunal emitió la sentencia?",
-        "¿Quiénes son las partes involucradas en el juicio?",
-        "¿Qué tipo de juicio o procedimiento se trata?",
-        "¿Qué hechos se narran como antecedentes?",
-        "¿Qué pruebas se ofrecieron en el juicio?",
-        "¿Qué actos procesales relevantes se mencionan?",
-        "¿Qué cuestiones jurídicas se analizan en los considerandos?",
-        "¿Qué leyes o principios jurídicos se citaron?",
-        "¿Cómo se valoraron las pruebas presentadas?",
-        "¿Qué argumentos de las partes fueron aceptados o rechazados?",
-        "¿Cuál fue la decisión final del juez?",
-        "¿Qué órdenes específicas se dieron en los puntos resolutivos?",
-        "¿Está incluida la firma y sello del juez y secretario?",
-        "¿Se usó Firma Electrónica Judicial (FEJEM)?",
-        "¿Qué preguntas clave del caso se resolvieron?",
-        "¿Cómo se explicó la norma legal aplicada?",
-        "¿Qué consecuencias o pasos a seguir se derivan de la sentencia?",
-        "¿El lenguaje utilizado es claro y comprensible para ciudadanos?",
-        "¿Se explican los tecnicismos jurídicos usados?",
-    ]
+def get_faq_questions() -> list[str]:
+    """
+    Lee las preguntas frecuentes desde el archivo.
+    Lanza FileNotFoundError si no existe el archivo.
+    """
+    if not os.path.exists(FAQ_FILE_PATH):
+        raise FileNotFoundError(f"Archivo de FAQ no encontrado: {FAQ_FILE_PATH}")
+
+    with open(FAQ_FILE_PATH, "r", encoding="utf-8") as f:
+        return [line.strip() for line in f if line.strip()]
+
+
+def get_system_prompt() -> str:
+    """
+    Lee el prompt del sistema desde el archivo.
+    Lanza FileNotFoundError si no existe el archivo.
+    """
+
+    # Try to get from the file
+    if not os.path.exists(SYSTEM_PROMPT_FILE_PATH):
+        raise FileNotFoundError(
+            f"Archivo de prompt del sistema no encontrado: {SYSTEM_PROMPT_FILE_PATH}"
+        )
+
+    with open(SYSTEM_PROMPT_FILE_PATH, "r", encoding="utf-8") as f:
+        return f.read()
 
 
 def flatten_list(nested_list):
@@ -57,7 +78,10 @@ def flatten_list(nested_list):
 def get_faq_results(doc_hash: str):
     results_str = ""
 
-    for question in get_faq_questions():
+    questions = get_faq_questions()
+    printer.green(f"Preguntas para extraer información del documento: {questions}")
+
+    for question in questions:
         retrieval = chroma_client.get_results(
             collection_name=f"doc_{doc_hash}",
             query_texts=[question],
@@ -67,6 +91,18 @@ def get_faq_results(doc_hash: str):
         results_str += f" {question.upper()}{' '.join(documents)}"
 
     return results_str
+
+
+DEFAULT_WARNING_TEXT = """
+Este sistema es solo una herramienta de apoyo y no sustituye el asesoramiento legal profesional. La información proporcionada por el sistema no debe considerarse como un consejo legal y no se garantiza su precisión o exhaustividad. Se recomienda consultar a un abogado calificado para obtener asesoramiento legal específico y adaptado a su situación particular.
+"""
+
+
+def get_warning_text():
+    warning_text = os.getenv("WARNING_TEXT", DEFAULT_WARNING_TEXT)
+    if not warning_text:
+        return DEFAULT_WARNING_TEXT
+    return warning_text
 
 
 def translate_to_spanish(text: str):
@@ -92,31 +128,18 @@ def generate_sentence_brief(
     physical_context = get_physical_context()
 
     use_cache = extra.get("use_cache", True)
-    system_from_client = extra.get("system_prompt", None)
+
     ai_interface = AIInterface(
         provider=os.getenv("PROVIDER", "ollama"), api_key=os.getenv("OLLAMA_API_KEY")
     )
 
-    system_prompt = (
-        system_from_client
-        or SYSTEM_PROMPT
-        or """
-    ### Role
-    You are an incredible legal expert in Mexican law. You are will receive all the possible text from a set of documents and images, you need to analyze them, they are related to the same case. Extract the relevant information and explain the result of the sentence in a clear and concise way,  any person should understand it. Keep in mind that your main task is to write a "Sentencia Ciudadana". You will receive a set of context documents with an example of a "Sentencia Ciudadana" and some guidelines for you to follow.
+    system_prompt = get_system_prompt()
+    if not system_prompt:
+        raise ValueError("No se encontró el prompt del sistema.")
 
-    ### Context
-    These files are part of the context given to execute your task, use them to comprehend your task and follow the writing guidelines explained in the files:
-    ---
-    {{context}}
-    ---
+    printer.blue("Usando System Prompt:")
+    printer.yellow(system_prompt)
 
-    ### Instructions
-    - Write a "Sentencia Ciudadana" using the information provided in the user messages.
-    - The information provided in the user messages is the result of a retrieval of the most relevant information from the files using a vector database, don't miss any important detail.
-    - Your response must be ONLY in Spanish.
-    - The final response should include all the relevant information from the files, don't miss any important detail.
-    """
-    )
     if physical_context:
         system_prompt = system_prompt.replace("{{context}}", physical_context)
 
@@ -125,15 +148,25 @@ def generate_sentence_brief(
 
     for document_path in document_paths:
         document_text = document_reader.read(document_path)
+        # Save the document text to a file
+        with open(
+            f"uploads/documents/read/{os.path.basename(document_path)}.txt",
+            "w",
+            encoding="utf-8",
+        ) as f:
+            f.write(document_text)
         document_hash = hasher(document_text)
-        chroma_client.get_or_create_collection(f"doc_{document_hash}")
-        chunks = chroma_client.chunkify(
-            document_text, chunk_size=1000, chunk_overlap=200
-        )
-        chroma_client.bulk_upsert_chunks(
-            collection_name=f"doc_{document_hash}",
-            chunks=chunks,
-        )
+        created = chroma_client.get_collection_or_none(f"doc_{document_hash}")
+        if not created:
+            chroma_client.get_or_create_collection(f"doc_{document_hash}")
+            chunks = chroma_client.chunkify(
+                document_text, chunk_size=1000, chunk_overlap=200
+            )
+            chroma_client.bulk_upsert_chunks(
+                collection_name=f"doc_{document_hash}",
+                chunks=chunks,
+            )
+
         faq_results = get_faq_results(document_hash)
         messages.append(
             {
@@ -168,14 +201,15 @@ def generate_sentence_brief(
     if use_cache:
         cached_response = redis_cache.get(messages_hash)
         if cached_response:
-            printer.green(f"Cache hit for hash: {messages_hash}")
+            printer.green(f"👀 Sentencia ciudadana cacheada: {messages_hash}")
             return cached_response
 
-    printer.red(f"Cache miss for hash: {messages_hash}")
+    printer.red(f"🔍 No se encontró la sentencia ciudadana en cache: {messages_hash}")
     response = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
     response = translate_to_spanish(response)
+    response = response + "\n\n" + get_warning_text()
 
     redis_cache.set(messages_hash, response, ex=EXPIRATION_TIME)
-    printer.green(f"Cache saved for hash: {messages_hash}")
+    printer.green(f"💾 Sentencia ciudadana guardada en cache: {messages_hash}")
 
     return response

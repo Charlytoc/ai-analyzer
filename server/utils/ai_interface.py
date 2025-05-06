@@ -15,12 +15,14 @@ def get_physical_context() -> str:
     context_files = [
         f for f in context_files if f.endswith(".md") or f.endswith(".txt")
     ]
+    ignored_files = ["SYSTEM.txt", "FAQ.txt"]
+    context_files = [f for f in context_files if f not in ignored_files]
     context = ""
     for file in context_files:
         with open(f"server/ai/context/{file}", "r", encoding="utf-8") as f:
             context += f'<FILE name="{file}" used_for="ai_context">\n'
             context += f.read()
-            context += f"</FILE>\n"
+            context += "</FILE>"
     return context
 
 
