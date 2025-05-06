@@ -65,6 +65,10 @@ if [ "$MODE" == "dev" ]; then
     pushd client
     npm install
     echo "🚀 Iniciando cliente en modo desarrollo..."
+
+    # Igual tiene que hacer un build
+    npm run build
+    echo "✅ Cliente en modo desarrollo instalado y listo para usar."
     npm run dev &
     popd
 else
