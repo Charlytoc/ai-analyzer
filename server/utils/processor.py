@@ -14,7 +14,7 @@ from server.ai.vector_store import chroma_client
 EXPIRATION_TIME = 60 * 60 * 24 * 30  # 30 days
 
 SYSTEM_PROMPT = os.getenv("SYSTEM_PROMPT", None)
-LIMIT_CHARACTERS_FOR_FILE = 50000
+LIMIT_CHARACTERS_FOR_TEXT = 100000
 
 CONTEXT_DIR = os.getenv("CONTEXT_DIR", "server/ai/context")
 FAQ_FILE_PATH = os.path.join(CONTEXT_DIR, "FAQ.txt")
@@ -79,17 +79,23 @@ def get_faq_results(doc_hash: str):
     results_str = ""
 
     questions = get_faq_questions()
-    printer.green(f"Preguntas para extraer información del documento: {questions}")
+    # printer.green(f"Preguntas para extraer información del documento: {questions}")
 
+    documents = set()
     for question in questions:
         retrieval = chroma_client.get_results(
             collection_name=f"doc_{doc_hash}",
             query_texts=[question],
             n_results=3,
         )
-        documents = flatten_list(retrieval.get("documents", []))
-        results_str += f" {question.upper()}{' '.join(documents)}"
 
+        _documents = flatten_list(retrieval.get("documents", []))
+        documents.update(_documents)
+
+    results_str += (
+        f"Lista de preguntas para la base de datos vectorial: {' '.join(questions)}"
+    )
+    results_str += f"Resultados de la búsqueda: {' '.join(documents)}"
     return results_str
 
 
@@ -145,6 +151,10 @@ def generate_sentence_brief(
     messages = [{"role": "system", "content": system_prompt}]
     document_reader = DocumentReader()
 
+    number_of_documents = len(document_paths)
+    max_characters_per_document = LIMIT_CHARACTERS_FOR_TEXT // number_of_documents
+
+    text_from_all_documents = ""
     for document_path in document_paths:
         document_text = document_reader.read(document_path)
         # Save the document text to a file
@@ -167,29 +177,24 @@ def generate_sentence_brief(
             )
 
         faq_results = get_faq_results(document_hash)
-        messages.append(
-            {
-                "role": "user",
-                "content": f"# FAQ RESULTS FOR DOCUMENT, use this information to write the Sentencia Ciudadana: {document_path}\n\n{faq_results}",
-            }
-        )
-        messages.append(
-            {
-                "role": "user",
-                "content": f"Initial content of the document, often it contains a lot of useful information to extract: {document_text[:15000]}",
-            }
+        text_from_all_documents += f"<document_text name='{document_path}'>: {document_text[:max_characters_per_document]} </document_text>"
+        text_from_all_documents += (
+            f"<faq_results for_document='{document_path}'>: {faq_results}</faq_results>"
         )
 
     for image_path in images_paths:
         image_reader = ImageReader()
         image_text = image_reader.read(image_path)
-
-        messages.append(
-            {
-                "role": "user",
-                "content": f"<Image source={image_path}>\n\n{image_text}\n\n</Image>",
-            }
+        text_from_all_documents += (
+            f"<image_text name={image_path}>: {image_text} </image_text>"
         )
+
+    messages.append(
+        {
+            "role": "user",
+            "content": f"# TEXT FROM ALL SOURCES\n\n{text_from_all_documents}",
+        }
+    )
 
     messages_json = json.dumps(messages, sort_keys=True, indent=4)
     # Save the messages to a file

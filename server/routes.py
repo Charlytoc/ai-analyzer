@@ -25,49 +25,58 @@ async def generate_sentence_brief_route(
     documents: List[UploadFile] = File([]),
     extra_data: str = Form(None),
 ):
-    printer.yellow("🔄 Generando sentencia ciudadana...")
+    try:
+        printer.yellow("🔄 Generando sentencia ciudadana...")
 
-    print("🚨 Validación de archivos", chroma_client)
-    # 🚨 Validación de archivos
-    if not images and not documents:
-        printer.red("❌ No se enviaron documentos ni imágenes.")
+        print("🚨 Validación de archivos", chroma_client)
+        # 🚨 Validación de archivos
+        if not images and not documents:
+            printer.red("❌ No se enviaron documentos ni imágenes.")
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "status": "ERROR",
+                    "message": "Debes enviar al menos un documento o una imagen para generar la sentencia ciudadana.",
+                },
+            )
+
+        document_paths: list[str] = []
+        images_paths: list[str] = []
+
+        for image in images:
+            image_path = f"{UPLOADS_PATH}/images/{image.filename}"
+            images_paths.append(image_path)
+            with open(image_path, "wb") as buffer:
+                shutil.copyfileobj(image.file, buffer)
+
+        for document in documents:
+            document_path = f"{UPLOADS_PATH}/documents/{document.filename}"
+            document_paths.append(document_path)
+            with open(document_path, "wb") as buffer:
+                shutil.copyfileobj(document.file, buffer)
+
+        # Procesar el JSON si viene
+        extra_info = {}
+        if extra_data:
+            try:
+                extra_info = json.loads(extra_data)
+                printer.blue(extra_info, "Información adicional recibida")
+            except json.JSONDecodeError:
+                printer.red("❌ Error al decodificar el JSON enviado en extra_data")
+
+        resumen = generate_sentence_brief(document_paths, images_paths, extra_info)
+        printer.green(f"✅ Sentencia ciudadana generada con éxito:\n{resumen}")
+
+        return {
+            "status": "SUCCESS",
+            "message": "Sentencia ciudadana generada con éxito.",
+            "brief": resumen,
+            "n_documents": len(document_paths),
+            "n_images": len(images_paths),
+        }
+    except Exception as e:
+        printer.red(f"❌ Error al generar la sentencia ciudadana: {e}")
         raise HTTPException(
-            status_code=400,
-            detail={
-                "status": "ERROR",
-                "message": "Debes enviar al menos un documento o una imagen para generar la sentencia ciudadana.",
-            },
+            status_code=500,
+            detail={"status": "ERROR", "message": str(e)},
         )
-
-    document_paths: list[str] = []
-    images_paths: list[str] = []
-
-    for image in images:
-        image_path = f"{UPLOADS_PATH}/images/{image.filename}"
-        images_paths.append(image_path)
-        with open(image_path, "wb") as buffer:
-            shutil.copyfileobj(image.file, buffer)
-
-    for document in documents:
-        document_path = f"{UPLOADS_PATH}/documents/{document.filename}"
-        document_paths.append(document_path)
-        with open(document_path, "wb") as buffer:
-            shutil.copyfileobj(document.file, buffer)
-
-    # Procesar el JSON si viene
-    extra_info = {}
-    if extra_data:
-        try:
-            extra_info = json.loads(extra_data)
-            printer.blue(extra_info, "Información adicional recibida")
-        except json.JSONDecodeError:
-            printer.red("❌ Error al decodificar el JSON enviado en extra_data")
-
-    resumen = generate_sentence_brief(document_paths, images_paths, extra_info)
-    printer.green(f"✅ Sentencia ciudadana generada con éxito:\n{resumen}")
-
-    return {
-        "status": "SUCCESS",
-        "message": "Sentencia ciudadana generada con éxito.",
-        "brief": resumen,
-    }
