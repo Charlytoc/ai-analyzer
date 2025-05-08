@@ -164,23 +164,30 @@ def generate_sentence_brief(
             encoding="utf-8",
         ) as f:
             f.write(document_text)
-        document_hash = hasher(document_text)
-        created = chroma_client.get_collection_or_none(f"doc_{document_hash}")
-        if not created:
-            chroma_client.get_or_create_collection(f"doc_{document_hash}")
-            chunks = chroma_client.chunkify(
-                document_text, chunk_size=1000, chunk_overlap=200
-            )
-            chroma_client.bulk_upsert_chunks(
-                collection_name=f"doc_{document_hash}",
-                chunks=chunks,
-            )
 
-        faq_results = get_faq_results(document_hash)
-        text_from_all_documents += f"<document_text name='{document_path}'>: {document_text[:max_characters_per_document]} </document_text>"
+        document_hash = hasher(document_text)
+
+        truncated = document_text[:max_characters_per_document]
         text_from_all_documents += (
-            f"<faq_results for_document='{document_path}'>: {faq_results}</faq_results>"
+            f"<document_text name='{document_path}'>: {truncated} </document_text>"
         )
+        if len(truncated) == len(document_text):
+            text_from_all_documents += f"<document_text name='{document_path}'>: \n{truncated}\n </document_text>"
+        else:
+            text_from_all_documents += f"<document_text name='{document_path}'>: \n{truncated}\n </document_text>"
+            created = chroma_client.get_collection_or_none(f"doc_{document_hash}")
+            if not created:
+                chroma_client.get_or_create_collection(f"doc_{document_hash}")
+                chunks = chroma_client.chunkify(
+                    document_text, chunk_size=1000, chunk_overlap=200
+                )
+                chroma_client.bulk_upsert_chunks(
+                    collection_name=f"doc_{document_hash}",
+                    chunks=chunks,
+                )
+
+            faq_results = get_faq_results(document_hash)
+            text_from_all_documents += f"<faq_results for_document='{document_path}'>: {faq_results}</faq_results>"
 
     for image_path in images_paths:
         image_reader = ImageReader()
@@ -206,7 +213,7 @@ def generate_sentence_brief(
         cached_response = redis_cache.get(messages_hash)
         if cached_response:
             printer.green(f"👀 Sentencia ciudadana cacheada: {messages_hash}")
-            return cached_response
+            return cached_response, True
 
     printer.red(f"🔍 No se encontró la sentencia ciudadana en cache: {messages_hash}")
     response = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
@@ -216,4 +223,4 @@ def generate_sentence_brief(
     redis_cache.set(messages_hash, response, ex=EXPIRATION_TIME)
     printer.green(f"💾 Sentencia ciudadana guardada en cache: {messages_hash}")
 
-    return response
+    return response, False

@@ -64,7 +64,9 @@ async def generate_sentence_brief_route(
             except json.JSONDecodeError:
                 printer.red("❌ Error al decodificar el JSON enviado en extra_data")
 
-        resumen = generate_sentence_brief(document_paths, images_paths, extra_info)
+        resumen, cache_used = generate_sentence_brief(
+            document_paths, images_paths, extra_info
+        )
         printer.green(f"✅ Sentencia ciudadana generada con éxito:\n{resumen}")
 
         return {
@@ -73,6 +75,7 @@ async def generate_sentence_brief_route(
             "brief": resumen,
             "n_documents": len(document_paths),
             "n_images": len(images_paths),
+            "cache_used": cache_used,
         }
     except Exception as e:
         printer.red(f"❌ Error al generar la sentencia ciudadana: {e}")
