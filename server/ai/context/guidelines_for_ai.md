@@ -34,16 +34,6 @@ Una sentencia judicial del Poder Judicial del Estado de México está integrada 
 - Indican con claridad qué se concede o niega, qué se ordena hacer o no hacer.
 - Tienen fuerza obligatoria para las partes.
 
-5. Validez
-   Para que una sentencia emitida por un tribunal sea válida, debe contener:
-
-   - Firma y sello
-     Debe contener la firma del juez o jueza que la emite, así como del secretario judicial. Esto solamente te da información de si es una sentencia oficial o no y NO es relevante para la sentencia ciudadana.
-   - Sello oficial del juzgado.
-   - O Firma Electrónica Judicial del estado de México, FEJEM, de juez y secretario de acuerdos.
-
-   Los datos de validez solo son importantes para ti, pero NO los incluyas en la sentencia ciudadana, puesto que eso ya es de conocimiento del usuario.
-
 # EJEMPLOS:
 
 ## Sentencia en versión simple, “Sentencia Ciudadana” que elementos o como se debe redactar
@@ -76,9 +66,6 @@ Una sentencia ciudadana es una modalidad de sentencia escrita en un lenguaje cla
 
 - Las órdenes específicas del tribunal en los puntos resolutivos,
 - Las consecuencias o “pasos a seguir” que se derivan de la sentencia y el tiempo para cumplirla,
-- Si se aprecia el uso de firma electrónica del tribunal, o en su caso, alguna certificación secretarial al pie de la sentencia, que la autorice como copia íntegra e inalterada de la sentencia original, que le otorgue validez oficial o legal,
-- Si no se aprecia el uso de firma electrónica o certificación secretarial, poner una advertencia final que indique: “No se aprecia uso de firma electrónica del tribunal, ni tampoco certificación alguna por parte del personal del tribunal; por lo que no se puede asegurar su validez legal”,
-
 
 Usa siempre formato markdown para la sentencia ciudadana, de forma que se pueda comprender fácilmente la estructura del documento.
 <!-- Fin de los ejemplos -->
