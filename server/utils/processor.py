@@ -152,7 +152,10 @@ def generate_sentence_brief(
     document_reader = DocumentReader()
 
     number_of_documents = len(document_paths)
-    max_characters_per_document = LIMIT_CHARACTERS_FOR_TEXT // number_of_documents
+    if number_of_documents > 1:
+        max_characters_per_document = LIMIT_CHARACTERS_FOR_TEXT // number_of_documents
+    else:
+        max_characters_per_document = LIMIT_CHARACTERS_FOR_TEXT
 
     text_from_all_documents = ""
     for document_path in document_paths:
