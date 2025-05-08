@@ -160,7 +160,9 @@ def generate_sentence_brief(
     text_from_all_documents = ""
     for document_path in document_paths:
         document_text = document_reader.read(document_path)
-        # Save the document text to a file
+        printer.yellow(f"🔍 Documento leído: {document_path}")
+        printer.yellow(f"🔍 Inicio del documento: {document_text[:200]}")
+
         with open(
             f"uploads/documents/read/{os.path.basename(document_path)}.txt",
             "w",
@@ -195,6 +197,8 @@ def generate_sentence_brief(
     for image_path in images_paths:
         image_reader = ImageReader()
         image_text = image_reader.read(image_path)
+        printer.yellow(f"🔍 Imagen leída: {image_path}")
+        printer.yellow(f"🔍 Inicio de la imagen: {image_text[:200]}")
         text_from_all_documents += (
             f"<image_text name={image_path}>: {image_text} </image_text>"
         )

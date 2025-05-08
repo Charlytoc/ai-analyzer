@@ -110,7 +110,7 @@ class OpenAIProvider:
             tools=tools,
             stream=stream,
         )
-        printer.yellow(response, "RESPONSE")
+        # printer.yellow(response, "RESPONSE")
 
         return response.choices[0].message.content
 
