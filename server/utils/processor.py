@@ -177,8 +177,12 @@ def generate_sentence_brief(
             f"<document_text name='{document_path}'>: {truncated} </document_text>"
         )
         if len(truncated) == len(document_text):
-            text_from_all_documents += f"<document_text name='{document_path}'>: \n{truncated}\n </document_text>"
+            printer.yellow(f"🔍 Se agrega todo el documento: {document_path}")
+            text_from_all_documents += f"<document_text name='{document_path}'>: \n{document_text}\n </document_text>"
         else:
+            printer.yellow(
+                f"🔍 Se agrega parte del documento y el resto es vectorizado: {document_path}"
+            )
             text_from_all_documents += f"<document_text name='{document_path}'>: \n{truncated}\n </document_text>"
             created = chroma_client.get_collection_or_none(f"doc_{document_hash}")
             if not created:
