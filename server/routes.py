@@ -1,7 +1,9 @@
 import json
-from fastapi import APIRouter, UploadFile, File, Form
+from fastapi import APIRouter, UploadFile, File, Form, Body
 import shutil
 import os
+
+import numpy as np
 from typing import List
 from fastapi import HTTPException
 
@@ -9,6 +11,7 @@ from server.utils.printer import Printer
 from server.utils.redis_cache import RedisCache
 from server.utils.processor import generate_sentence_brief
 from server.ai.vector_store import chroma_client
+from server.utils.ai_interface import AIInterface
 
 UPLOADS_PATH = "uploads"
 os.makedirs(f"{UPLOADS_PATH}/images", exist_ok=True)
@@ -17,6 +20,63 @@ os.makedirs(f"{UPLOADS_PATH}/documents", exist_ok=True)
 router = APIRouter(prefix="/api")
 printer = Printer("ROUTES")
 redis_cache = RedisCache()
+
+
+def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
+    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
+
+
+def euclidean_distance(a: np.ndarray, b: np.ndarray) -> float:
+    return float(np.linalg.norm(a - b))
+
+
+@router.post("/compare-embeddings")
+async def compare_embeddings_route(body: dict = Body(...)):
+    target_text = body.get("target_text")
+    compares = body.get("compares", [])
+    func = body.get("function", "cosine").lower()
+
+    if not target_text or not compares or func not in {"cosine", "euclidean"}:
+        raise HTTPException(400, "Payload inválido.")
+
+    ai = AIInterface(provider="ollama", api_key="")
+    try:
+        # 1) Embed y aplanar a 1D
+        t_emb = np.array(ai.embed(target_text)["embeddings"]).flatten()
+        c_embs = [np.array(ai.embed(text)["embeddings"]).flatten() for text in compares]
+    except Exception as e:
+        raise HTTPException(500, f"Error al embed: {e}")
+
+    # 2) Elige función
+    comparator = cosine_similarity if func == "cosine" else euclidean_distance
+    metric = "cosine similarity" if func == "cosine" else "euclidean distance"
+
+    # 3) Calcula scores
+    results = []
+    for text, emb in zip(compares, c_embs):
+        score = comparator(t_emb, emb)
+        results.append({"text": text, "score": score})
+
+    return {"status": "OK", "metric": metric, "results": results}
+
+
+@router.post("/embed-text")
+async def embed_text_route(payload: dict = Body(...)):
+    text = payload.get("text")
+    ai_interface = AIInterface(provider="ollama", api_key="")
+    try:
+        result = ai_interface.embed(text)
+        vector = result["embeddings"]
+        # Save the vector result as vector.json
+        with open("vector.json", "w") as f:
+            json.dump(vector, f)
+        return {"status": "OK", "embedding": vector}
+    except Exception as e:
+        printer.red(f"❌ Error al generar el embedding: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail={"status": "ERROR", "message": str(e)},
+        )
 
 
 @router.post("/generate-sentence-brief")

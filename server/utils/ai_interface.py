@@ -76,6 +76,9 @@ class OllamaProvider:
         else:
             print(f"Modelo '{model}' disponible.")
 
+    def embed(self, text: str, model: str = "nomic-embed-text"):
+        return self.client.embed(model=model, input=text)
+
     def chat(
         self,
         messages: list[dict],
@@ -89,6 +92,7 @@ class OllamaProvider:
             messages=messages,
             tools=tools,
             stream=stream,
+            options={"num_ctx": 100000},
         )
         return response.message.content
 
@@ -128,6 +132,9 @@ class AIInterface:
             raise ValueError(f"Provider {provider} not supported")
 
         printer.blue("Using AI from", self.provider)
+
+    def embed(self, text: str, model: str = "nomic-embed-text"):
+        return self.client.embed(text, model)
 
     def chat(
         self,

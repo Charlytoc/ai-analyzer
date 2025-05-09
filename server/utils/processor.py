@@ -112,7 +112,7 @@ def get_warning_text():
 
 def translate_to_spanish(text: str):
     system_prompt = """
-    Your task is to translate a given text to spanish, preserve the original meaning and structure of the text. Return only the translated text, without any other text or explanation.
+    Your task is to translate the given text to spanish, preserve the original meaning and structure of the text. Return only the translated text, without any other text or explanation. Your unique response must be the translated text.
     """
     ai_interface = AIInterface(
         provider=os.getenv("PROVIDER", "ollama"), api_key=os.getenv("OLLAMA_API_KEY")
@@ -147,6 +147,8 @@ def generate_sentence_brief(
 
     if physical_context:
         system_prompt = system_prompt.replace("{{context}}", physical_context)
+    if len(get_faq_questions()) > 0:
+        system_prompt = system_prompt.replace("{{faq}}", "\n".join(get_faq_questions()))
 
     messages = [{"role": "system", "content": system_prompt}]
     document_reader = DocumentReader()
@@ -160,7 +162,7 @@ def generate_sentence_brief(
     text_from_all_documents = ""
     for document_path in document_paths:
         document_text = document_reader.read(document_path)
-        printer.yellow(f"🔍 Documento leído: {document_path}")
+        printer.green(f"🔍 Documento leído: {document_path}")
         printer.yellow(f"🔍 Inicio del documento: {document_text[:200]}")
 
         with open(
@@ -173,9 +175,7 @@ def generate_sentence_brief(
         document_hash = hasher(document_text)
 
         truncated = document_text[:max_characters_per_document]
-        text_from_all_documents += (
-            f"<document_text name='{document_path}'>: {truncated} </document_text>"
-        )
+
         if len(truncated) == len(document_text):
             printer.yellow(f"🔍 Se agrega todo el documento: {document_path}")
             text_from_all_documents += f"<document_text name='{document_path}'>: \n{document_text}\n </document_text>"
@@ -228,6 +228,7 @@ def generate_sentence_brief(
 
     printer.red(f"🔍 No se encontró la sentencia ciudadana en cache: {messages_hash}")
     response = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
+
     response = translate_to_spanish(response)
     response = response + "\n\n" + get_warning_text()
 

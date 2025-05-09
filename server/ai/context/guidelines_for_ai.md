@@ -1,71 +1,62 @@
-<!-- Guía para la IA: Usa toda la información de este archivo para ayudarte a elaborar la sentencia ciudadana final en base a los documentos que luego se te van a proporcionar. Este archivo es solo infomación de cómo hacer tu tarea correctamente. -->
+# How an AI Should Draft a “Citizen-Friendly” Judgment
 
-# Cómo debería una IA elaborar una sentencia ciudadana
+First, let’s understand what a citizen-friendly judgment is.
 
-Primero entendamos que es una sentencia ciudadana.
+A citizen-friendly judgment is essentially a point-by-point summary of a formal court decision. It takes a pile of legal documents and condenses them into a short, direct document that anyone can understand—regardless of legal training.
 
-Una sentencia ciudadana es básicamente el resumen punto por punto del resultado de una sentencia judicial. Es tomar un montón de documentos y resumirlos en un documento corto y directo que cualquier persona pueda entender sin importar su formación jurídica.
+## Technical Elements of a Formal Judgment
 
-## Elementos Técnicos de una Sentencia, formalidad legal.
+A judicial decision from the Judiciary of the State of Mexico consists of several formal and substantive parts that ensure its legal validity and clarity. While details may vary by case type (criminal, civil, family, etc.), in general a judgment includes:
 
-Una sentencia judicial del Poder Judicial del Estado de México está integrada por varios elementos formales y sustantivos que aseguran su validez legal y claridad. Aunque puede variar un poco dependiendo del tipo de juicio (penal, civil, familiar, etc.), en términos generales, una sentencia incluye las siguientes partes:
+1. **Header**
+   - Name of the court (e.g., “Second Civil Court of the Judicial District of Toluca”)
+   - Case number
+   - Names of the parties (plaintiff and defendant, or victim and accused)
+   - Type of proceeding
 
-1. Encabezado
+2. **Resultandos**  
+   - A narrative of the case background: what each party alleged or requested, the evidence offered, and key procedural acts  
+   - Presented in chronological, detailed form
 
-- Nombre del tribunal (por ejemplo: Juzgado Segundo de lo Civil del Distrito Judicial de Toluca).
-- Número de expediente.
-- Nombre de las partes (actor y demandado, o imputado y víctima).
-- Tipo de juicio o procedimiento.
+3. **Considerandos**  
+   - The core analysis where the judge explains the legal reasoning  
+   - Evaluation of the evidence and argument for why one side prevails  
+   - Citations of laws, legal principles, and precedents as needed
 
-2. Resultandos
+4. **Puntos Resolutivos**  
+   - The concrete orders of the judge  
+   - Clearly states what is granted or denied, what must be done or not done  
+   - Has binding effect on the parties
 
-- Narración de los antecedentes del caso: lo que las partes dijeron o solicitaron, las pruebas ofrecidas y los actos procesales relevantes.
-- Se presentan de forma cronológica y detallada.
+---
 
-3. Considerandos
-   Parte medular de la sentencia donde el juez expone el análisis jurídico.
+A **citizen-friendly judgment** is a version written in clear, accessible language for anyone without legal training—especially the parties involved. Its goal is to bring justice closer to citizens by promoting transparency, accountability, and effective access to justice. Such a judgment must include:
 
-- Se valoran las pruebas y se argumenta por qué se da la razón a una parte u otra.
-- Se citan leyes, principios jurídicos y precedentes si es necesario.
+1. **First Section (Header-style)**  
+   In a very simple, brief paragraph indicate:  
+   - The court that issued the decision  
+   - The place and date of issuance  
+   - The case number  
+   - The type of proceeding (controversy, trial, process, litigation)  
+   - Whether it is an interlocutory or final judgment (a final judgment decides the merits of the case; an interlocutory one decides an incident or procedural matter)
 
-4. Puntos Resolutivos
-   Son las decisiones concretas del juez.
+2. **Second Section (Resultandos-style)**  
+   In brief paragraphs and short sentences, direct tone:  
+   - Parties involved (the plaintiff is the holder of the right, even if represented; in civil/family/mercantile/labor cases the sides are plaintiff and defendant; in criminal cases they are victim and accused)  
+   - The action sought  
+   - The reason for the dispute and the remedies claimed  
+   - Key facts of the case (including those alleged by the plaintiff and those countered by the defendant)
 
-- Indican con claridad qué se concede o niega, qué se ordena hacer o no hacer.
-- Tienen fuerza obligatoria para las partes.
+3. **Third Section (Considerandos-style)**  
+   In brief paragraphs, short sentences, direct tone, avoid legal jargon (if needed, define terms in parentheses):  
+   - The legal question(s) to resolve  
+   - The evidence presented and relied upon by the court  
+   - The court’s decision (**ratio decidendi**), i.e. the fundamental legal principle that justifies the ruling—explained in citizen-friendly language  
+   - Clarify that in a trial “no one wins or loses”; rather, rights are assigned to whoever proved their case under the evidence
 
-# EJEMPLOS:
+4. **Fourth Section (Puntos Resolutivos-style)**  
+   In brief paragraphs, short sentences, direct tone, avoid legal jargon (if needed, define terms):  
+   - The court’s specific orders  
+   - The consequences or “next steps” and deadlines to comply
 
-## Sentencia en versión simple, “Sentencia Ciudadana” que elementos o como se debe redactar
-
-Una sentencia ciudadana es una modalidad de sentencia escrita en un lenguaje claro, accesible y comprensible para cualquier persona que no tenga formación jurídica, especialmente para las partes involucradas en el proceso. Su objetivo es acercar la justicia a la ciudadanía, promoviendo la transparencia, la rendición de cuentas y el acceso efectivo a la justicia; por lo que una sentencia ciudadana debe incluir:
-
-1. Un primer apartado (que pueda asimilarse al encabezado de la sentencia formal), en el que se indique en un párrafo breve y estructurado de forma muy simple:
-
-- El tribunal que dictó la sentencia,
-- El lugar y fecha en que se dictó la sentencia,
-- El número de expediente,
-- El tipo de procedimiento que se resuelve (Teniendo en cuenta que procedimiento =controversia =juicio =proceso =litigio),
-- Si se trata de una sentencia interlocutoria o definitiva (Teniendo en cuenta que una sentencia definitiva decide el fondo del litigio en lo principal; y una sentencia interlocutoria decide un incidente o alguna cuestión procesal).
-
-2. Un segundo apartado (que pueda asimilarse a los resultandos de la sentencia formal), en el que se indique en párrafos breves, frases cortas, con tono directo y comprensible:
-
-- Las partes involucradas en el procedimiento (Teniendo en cuenta que, cuando la demanda se promueve ‘por propio derecho’ el actor-promovente es el titular del derecho; y cuando la demanda se promueve ‘en mi carácter de representante legal’ o ‘apoderado legal’, el actor sigue siendo la persona titular del derecho litigioso, no el abogado patrono, ni el representante legal, ni el apoderado legal. Además, en los juicios civiles, familiares, mercantiles y laborales, las partes son actor y demandado; y en los juicios penales las partes son víctima e imputado) (No sé si este sea el lugar y momento oportuno para explicarle cuál es la diferencia entre actor y demandado, imputado y víctima u ofendido, etc.; y sobre todo, la diferencia entre el promovente principal y su representante legal),
-- La acción intentada,
-- El motivo de la controversia y las prestaciones reclamadas,
-- Los hechos relevantes del caso (que incluya tanto los hechos narrados por el actor en su demanda, como los invocados en contraposición por el demandado en su contestación),
-
-3.- Un tercer apartado (que pueda asimilarse a los considerandos de la sentencia formal), en el que se indique en párrafos breves, frases cortas, con tono directo y comprensible, evitando el uso de tecnicismos jurídicos, aunque si resultan estrictamente necesarios para comprender la sentencia, deberás mencionarlos e inmediatamente después explicarlos entre paréntesis:
-
-- La cuestión jurídica a resolver o los puntos jurídicos a discusión,
-- Las pruebas desahogadas en el juicio, con las que el tribunal tuvo por demostrados los hechos controvertidos por las partes,
-- La decisión del tribunal (La "ratio decidendi", es la razón jurídica fundamental que sustenta una decisión del tribunal. La "ratio decidendi" es la norma general o principio jurídico que el tribunal aplica para resolver un caso concreto y que forma la base de su decisión; es decir, es el fundamento legal que justifica la sentencia. Para identificarla, es necesario analizar la sentencia en su totalidad, identificar la cuestión legal que se resuelve, el razonamiento jurídico del tribunal y la regla legal que se aplica para tomar la decisión y crear una norma jurídica individualizada),
-- Explicar que en un juicio “nadie gana ni pierde”; sino que se adjudica, asigna, se reconoce o se otorga un derecho a la persona que demostró tener la razón legal conforme a las pruebas presentadas en el procedimiento,
-
-4.- Un cuarto apartado (que pueda asimilarse a los puntos resolutivos de la sentencia formal), en el que se indique en párrafos breves, frases cortas, con tono directo y comprensible, evitando el uso de tecnicismos jurídicos, aunque si resultan estrictamente necesarios para comprender la sentencia, deberás mencionarlos e inmediatamente después explicarlos entre paréntesis:
-
-- Las órdenes específicas del tribunal en los puntos resolutivos,
-- Las consecuencias o “pasos a seguir” que se derivan de la sentencia y el tiempo para cumplirla,
-
-Usa siempre formato markdown para la sentencia ciudadana, de forma que se pueda comprender fácilmente la estructura del documento.
-<!-- Fin de los ejemplos -->
+Always use Markdown formatting so the citizen-friendly judgment’s structure is easy to follow.

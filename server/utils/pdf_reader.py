@@ -40,6 +40,17 @@ class DocumentStrategy(ABC):
 # =========================
 
 
+def could_contain_digital_signature(text: str) -> bool:
+    suspect_terms = [
+        "firma ",
+        "OCSP",
+        "OCSP FEJEM",
+        "SHA256",
+        "EVIDENCIA CRIPTOGRÁFICA",
+        "algoritmo",
+    ]
+    return any(term in text.lower() for term in suspect_terms)
+
 class PyMuPDFWithOCRStrategy(DocumentStrategy):
     SAMPLE_PAGES = 4
 
@@ -55,6 +66,12 @@ class PyMuPDFWithOCRStrategy(DocumentStrategy):
                     pix = page.get_pixmap()
                     img = Image.open(io.BytesIO(pix.tobytes()))
                     text = pytesseract.image_to_string(img)
+
+                if could_contain_digital_signature(text):
+                    printer.magenta(
+                        f"Page {page.number} could contain digital signature"
+                    )
+
                 pages.append(text)
         return PAGE_CONNECTOR.join(pages)
 
