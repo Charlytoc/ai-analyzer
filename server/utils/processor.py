@@ -10,6 +10,7 @@ from server.utils.redis_cache import RedisCache
 from server.utils.ai_interface import AIInterface, get_physical_context
 from server.utils.image_reader import ImageReader
 from server.ai.vector_store import chroma_client
+from server.utils.detectors import is_spanish
 
 EXPIRATION_TIME = 60 * 60 * 24 * 30  # 30 days
 
@@ -228,8 +229,11 @@ def generate_sentence_brief(
 
     printer.red(f"🔍 No se encontró la sentencia ciudadana en cache: {messages_hash}")
     response = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
-
-    response = translate_to_spanish(response)
+    if not is_spanish(response):
+        printer.red("🔍 La respuesta no está en español, traduciendo...")
+        response = translate_to_spanish(response)
+    else:
+        printer.green("🔍 La respuesta ya está en español en el primer intento.")
     response = response + "\n\n" + get_warning_text()
 
     redis_cache.set(messages_hash, response, ex=EXPIRATION_TIME)
