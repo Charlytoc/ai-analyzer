@@ -102,7 +102,7 @@ def get_faq_results(doc_hash: str):
 
 DEFAULT_WARNING_TEXT = """⚠️ Aviso Importante:
 
-El contenido del documento mostrado, como pueden ser los textos, los gráficos, las imágenes y otro tipo de material incluido en el Sitio Web de "Sentencia Ciudadana", tiene exclusivamente una finalidad informativa de lectura simple. El contenido no se ha concebido como sustituto de la resolución judicial, en consecuencia, el texto mostrado no tiene valor legal.
+El contenido mostrado, incluyendo: textos, gráficos, imágenes u otro tipo de material incluido en el sitio web denominado ‘Sentencia Ciudadana’, tiene exclusivamente una finalidad informativa de lectura simple. Por tanto, no debe ser entendido o concebido como un sustituto de la resolución judicial; en consecuencia, el texto mostrado no tiene ningún valor legal.
 
 Este resumen fue generado automáticamente por inteligencia artificial para facilitar la comprensión general del/los adjunto(s). Puede contener errores u omisiones debido a la calidad del texto, del archivo original o a su complejidad.
 """
