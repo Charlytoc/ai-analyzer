@@ -8,21 +8,54 @@ from openai import OpenAI
 
 printer = Printer("AI INTERFACE")
 
+CONTEXT_DIR = os.getenv("CONTEXT_DIR", "server/ai/context")
+FAQ_FILE_PATH = os.path.join(CONTEXT_DIR, "FAQ.txt")
+SYSTEM_PROMPT_FILE_PATH = os.path.join(CONTEXT_DIR, "SYSTEM.txt")
+
+
+def get_faq_questions() -> list[str]:
+    """
+    Lee las preguntas frecuentes desde el archivo.
+    Lanza FileNotFoundError si no existe el archivo.
+    """
+    if not os.path.exists(FAQ_FILE_PATH):
+        raise FileNotFoundError(f"Archivo de FAQ no encontrado: {FAQ_FILE_PATH}")
+
+    with open(FAQ_FILE_PATH, "r", encoding="utf-8") as f:
+        return [line.strip() for line in f if line.strip()]
+
+
+def get_system_prompt() -> str:
+    """
+    Lee el prompt del sistema desde el archivo.
+    Lanza FileNotFoundError si no existe el archivo.
+    """
+
+    # Try to get from the file
+    if not os.path.exists(SYSTEM_PROMPT_FILE_PATH):
+        raise FileNotFoundError(
+            f"Archivo de prompt del sistema no encontrado: {SYSTEM_PROMPT_FILE_PATH}"
+        )
+
+    with open(SYSTEM_PROMPT_FILE_PATH, "r", encoding="utf-8") as f:
+        return f.read()
+
 
 def get_physical_context() -> str:
-    # Reads all the files from server/ai/context
     context_files = os.listdir("server/ai/context")
-    context_files = [
-        f for f in context_files if f.endswith(".md") or f.endswith(".txt")
-    ]
-    ignored_files = ["SYSTEM.txt", "FAQ.txt"]
-    context_files = [f for f in context_files if f not in ignored_files]
+    valid_extensions = (".md", ".txt", ".csv")
+    ignored_files = {"SYSTEM.txt", "FAQ.txt"}
+
     context = ""
     for file in context_files:
-        with open(f"server/ai/context/{file}", "r", encoding="utf-8") as f:
-            context += f'<FILE name="{file}" used_for="ai_context">\n'
-            context += f.read()
-            context += "</FILE>"
+        if file.endswith(valid_extensions) and file not in ignored_files:
+            try:
+                with open(f"server/ai/context/{file}", "r", encoding="utf-8") as f:
+                    context += f'<FILE name="{file}" used_for="ai_context">\n'
+                    context += f.read()
+                    context += "</FILE>\n"
+            except Exception as e:
+                printer.red(f"Error reading file {file}: {e}")
     return context
 
 

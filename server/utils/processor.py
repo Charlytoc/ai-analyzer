@@ -7,19 +7,19 @@ from pydantic import BaseModel, Field, field_validator
 from server.utils.pdf_reader import DocumentReader
 from server.utils.printer import Printer
 from server.utils.redis_cache import RedisCache
-from server.utils.ai_interface import AIInterface, get_physical_context
+from server.utils.ai_interface import (
+    AIInterface,
+    get_physical_context,
+    get_faq_questions,
+    get_system_prompt,
+)
 from server.utils.image_reader import ImageReader
 from server.ai.vector_store import chroma_client
 from server.utils.detectors import is_spanish
 
-EXPIRATION_TIME = 60 * 60 * 24 * 30  # 30 days
-
-SYSTEM_PROMPT = os.getenv("SYSTEM_PROMPT", None)
+EXPIRATION_TIME = 60 * 60 * 24 * 30
 LIMIT_CHARACTERS_FOR_TEXT = 100000
 
-CONTEXT_DIR = os.getenv("CONTEXT_DIR", "server/ai/context")
-FAQ_FILE_PATH = os.path.join(CONTEXT_DIR, "FAQ.txt")
-SYSTEM_PROMPT_FILE_PATH = os.path.join(CONTEXT_DIR, "SYSTEM.txt")
 
 printer = Printer("ROUTES")
 redis_cache = RedisCache()
@@ -41,39 +41,17 @@ def hasher(text: str):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def get_faq_questions() -> list[str]:
-    """
-    Lee las preguntas frecuentes desde el archivo.
-    Lanza FileNotFoundError si no existe el archivo.
-    """
-    if not os.path.exists(FAQ_FILE_PATH):
-        raise FileNotFoundError(f"Archivo de FAQ no encontrado: {FAQ_FILE_PATH}")
-
-    with open(FAQ_FILE_PATH, "r", encoding="utf-8") as f:
-        return [line.strip() for line in f if line.strip()]
-
-
-def get_system_prompt() -> str:
-    """
-    Lee el prompt del sistema desde el archivo.
-    Lanza FileNotFoundError si no existe el archivo.
-    """
-
-    # Try to get from the file
-    if not os.path.exists(SYSTEM_PROMPT_FILE_PATH):
-        raise FileNotFoundError(
-            f"Archivo de prompt del sistema no encontrado: {SYSTEM_PROMPT_FILE_PATH}"
-        )
-
-    with open(SYSTEM_PROMPT_FILE_PATH, "r", encoding="utf-8") as f:
-        return f.read()
-
-
 def flatten_list(nested_list):
     """Aplana una lista de listas en una sola lista de elementos."""
     if not nested_list:
         return []
     return [item for sublist in nested_list for item in sublist]
+
+
+def remove_duplicates(lst):
+    """Elimina duplicados de una lista manteniendo el orden."""
+    seen = set()
+    return [item for item in lst if not (item in seen or seen.add(item))]
 
 
 def get_faq_results(doc_hash: str):
@@ -96,6 +74,7 @@ def get_faq_results(doc_hash: str):
     results_str += (
         f"Lista de preguntas para la base de datos vectorial: {' '.join(questions)}"
     )
+    documents = remove_duplicates(documents)
     results_str += f"Resultados de la búsqueda: {' '.join(documents)}"
     return results_str
 
@@ -136,6 +115,9 @@ def generate_sentence_brief(
     document_paths: list[str], images_paths: list[str], extra: dict = {}
 ):
     physical_context = get_physical_context()
+
+    printer.blue("Usando Contexto Físico:")
+    printer.yellow(physical_context)
 
     use_cache = extra.get("use_cache", True)
 
