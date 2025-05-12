@@ -100,7 +100,11 @@ def get_faq_results(doc_hash: str):
     return results_str
 
 
-DEFAULT_WARNING_TEXT = """> Este sistema es solo una herramienta de apoyo y no sustituye el asesoramiento legal profesional. La información proporcionada por el sistema no debe considerarse como un consejo legal y no se garantiza su precisión o exhaustividad. Se recomienda consultar a un abogado calificado para obtener asesoramiento legal específico y adaptado a su situación particular.
+DEFAULT_WARNING_TEXT = """⚠ Aviso Importante:
+
+El contenido del documento mostrado, como pueden ser los textos, los gráficos, las imágenes y otro tipo de material incluido en el Sitio Web de "Sentencia Ciudadana", tiene exclusivamente una finalidad informativa de lectura simple. El contenido no se ha concebido como sustituto de la resolución judicial, en consecuencia, el texto mostrado no tiene valor legal.
+
+Este resumen fue generado automáticamente por inteligencia artificial para facilitar la comprensión general del/los adjunto(s). Puede contener errores u omisiones debido a la calidad del texto, del archivo original o a su complejidad.
 """
 
 
@@ -229,7 +233,7 @@ def generate_sentence_brief(
 
     printer.red(f"🔍 No se encontró la sentencia ciudadana en cache: {messages_hash}")
     response = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
-    if not is_spanish(response):
+    if not is_spanish(response[:150]):
         printer.red("🔍 La respuesta no está en español, traduciendo...")
         response = translate_to_spanish(response)
     else:

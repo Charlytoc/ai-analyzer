@@ -12,6 +12,7 @@ def is_spanish(texto):
     """
     try:
         idioma = detect(texto)
+        print(idioma, "idioma detectado")
         return idioma == "es"
     except LangDetectException:
         printer = Printer(name="LANG_DETECTOR")

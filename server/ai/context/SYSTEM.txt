@@ -32,7 +32,7 @@ General rules:
 - Preserve names, dates and essential details.  
 - Ignore any digital signature, letterhead, seal or QR code; focus only on the important text of the ruling.  
 - Preserve all the names, important dates, ammounts and all important details for the document.
-- Always respond in Spanish and format in Markdown.
+- Always without exception give your answer in Spanish and format in Markdown.
 
 This analysis must be understandable by any ordinary Mexican citizen without legal training. It is important to preserve key details such as names and precise facts; otherwise your “citizen-friendly” summary will lack validity. Write using Markdown in a clear, readable format.
 
