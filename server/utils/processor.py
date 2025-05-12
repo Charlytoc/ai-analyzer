@@ -100,7 +100,7 @@ def get_faq_results(doc_hash: str):
     return results_str
 
 
-DEFAULT_WARNING_TEXT = """⚠ Aviso Importante:
+DEFAULT_WARNING_TEXT = """⚠️ Aviso Importante:
 
 El contenido del documento mostrado, como pueden ser los textos, los gráficos, las imágenes y otro tipo de material incluido en el Sitio Web de "Sentencia Ciudadana", tiene exclusivamente una finalidad informativa de lectura simple. El contenido no se ha concebido como sustituto de la resolución judicial, en consecuencia, el texto mostrado no tiene valor legal.
 
