@@ -107,15 +107,14 @@ async def auth_and_cors(request: Request, call_next):
         )
 
         payload = {"access_token": token}
-        printer.yellow("Validando token...")
+        printer.yellow("Validando token...", payload)
         async with httpx.AsyncClient(timeout=10) as client:
             headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
-            resp = await client.post(validate_url, data=payload, headers=headers)
-
             body = urlencode(payload)
             resp = await client.post(validate_url, data=body, headers=headers)
+            printer.yellow("Respuesta del servidor:", resp.text)
         if resp.status_code != 200:
+            printer.red("Token inválido o expirado")
             return JSONResponse(
                 status_code=401, content={"detail": "Invalid or expired token."}
             )

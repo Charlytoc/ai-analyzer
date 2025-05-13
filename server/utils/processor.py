@@ -198,9 +198,6 @@ def generate_sentence_brief(
         )
 
     user_message_text = f"# TEXT FROM ALL SOURCES\n\n{text_from_all_documents}"
-    feedback_text = get_feedback_from_vector_store(user_message_text)
-    if feedback_text:
-        user_message_text += f"\n\n# You previously received this feedback on other sentences, try to not repeat yourself and avoid the same mistakes:\n\n{feedback_text}"
 
     messages.append(
         {
@@ -212,6 +209,15 @@ def generate_sentence_brief(
     messages_json = json.dumps(messages, sort_keys=True, indent=4)
     messages_hash = hashlib.sha256(messages_json.encode("utf-8")).hexdigest()
 
+    feedback_text = get_feedback_from_vector_store(user_message_text)
+    if feedback_text:
+        printer.blue("🔍 Feedback encontrado:")
+        messages.append(
+            {
+                "role": "user",
+                "content": f"# You previously received this feedback on other sentences, try to not repeat yourself and avoid the same mistakes:\n\n{feedback_text}",
+            }
+        )
     redis_cache.set(
         f"messages_input:{messages_hash}", messages_json, ex=EXPIRATION_TIME
     )
