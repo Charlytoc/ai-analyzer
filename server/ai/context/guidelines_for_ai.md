@@ -1,62 +1,89 @@
-# How an AI Should Draft a “Citizen-Friendly” Judgment
+# Guía para la IA: Cómo redactar una “Sentencia Ciudadana”
 
-First, let’s understand what a citizen-friendly judgment is.
+## ¿Qué es una Sentencia Ciudadana?
 
-A citizen-friendly judgment is essentially a point-by-point summary of a formal court decision. It takes a pile of legal documents and condenses them into a short, direct document that anyone can understand—regardless of legal training.
+Una *Sentencia Ciudadana* es una versión simplificada, clara y accesible de una sentencia judicial formal. Su propósito es que **cualquier persona, sin conocimientos legales**, pueda entender qué pasó, qué se decidió y por qué.
 
-## Technical Elements of a Formal Judgment
-
-A judicial decision from the Judiciary of the State of Mexico consists of several formal and substantive parts that ensure its legal validity and clarity. While details may vary by case type (criminal, civil, family, etc.), in general a judgment includes:
-
-1. **Header**
-   - Name of the court (e.g., “Second Civil Court of the Judicial District of Toluca”)
-   - Case number
-   - Names of the parties (plaintiff and defendant, or victim and accused)
-   - Type of proceeding
-
-2. **Resultandos**  
-   - A narrative of the case background: what each party alleged or requested, the evidence offered, and key procedural acts  
-   - Presented in chronological, detailed form
-
-3. **Considerandos**  
-   - The core analysis where the judge explains the legal reasoning  
-   - Evaluation of the evidence and argument for why one side prevails  
-   - Citations of laws, legal principles, and precedents as needed
-
-4. **Puntos Resolutivos**  
-   - The concrete orders of the judge  
-   - Clearly states what is granted or denied, what must be done or not done  
-   - Has binding effect on the parties
+No es una copia ni un resumen técnico: es una **explicación narrativa y humana del juicio**, centrada en las personas involucradas y en los hechos que afectan su vida.
 
 ---
 
-A **citizen-friendly judgment** is a version written in clear, accessible language for anyone without legal training—especially the parties involved. Its goal is to bring justice closer to citizens by promoting transparency, accountability, and effective access to justice. Such a judgment must include:
+## Estructura de una Sentencia Judicial Formal (Referencial)
 
-1. **First Section (Header-style)**  
-   In a very simple, brief paragraph indicate:  
-   - The court that issued the decision  
-   - The place and date of issuance  
-   - The case number  
-   - The type of proceeding (controversy, trial, process, litigation)  
-   - Whether it is an interlocutory or final judgment (a final judgment decides the merits of the case; an interlocutory one decides an incident or procedural matter)
+Las sentencias del Poder Judicial del Estado de México suelen incluir:
 
-2. **Second Section (Resultandos-style)**  
-   In brief paragraphs and short sentences, direct tone:  
-   - Parties involved (the plaintiff is the holder of the right, even if represented; in civil/family/mercantile/labor cases the sides are plaintiff and defendant; in criminal cases they are victim and accused)  
-   - The action sought  
-   - The reason for the dispute and the remedies claimed  
-   - Key facts of the case (including those alleged by the plaintiff and those countered by the defendant)
+1. **Encabezado**
+   - Nombre del tribunal
+   - Número de expediente
+   - Nombres de las partes
+   - Tipo de procedimiento
 
-3. **Third Section (Considerandos-style)**  
-   In brief paragraphs, short sentences, direct tone, avoid legal jargon (if needed, define terms in parentheses):  
-   - The legal question(s) to resolve  
-   - The evidence presented and relied upon by the court  
-   - The court’s decision (**ratio decidendi**), i.e. the fundamental legal principle that justifies the ruling—explained in citizen-friendly language  
-   - Clarify that in a trial “no one wins or loses”; rather, rights are assigned to whoever proved their case under the evidence
+2. **Resultandos**
+   - Qué pidió cada parte, qué hechos alegaron y qué pruebas ofrecieron
+   - Orden cronológico de los hechos procesales
 
-4. **Fourth Section (Puntos Resolutivos-style)**  
-   In brief paragraphs, short sentences, direct tone, avoid legal jargon (if needed, define terms):  
-   - The court’s specific orders  
-   - The consequences or “next steps” and deadlines to comply
+3. **Considerandos**
+   - Análisis legal y evaluación de pruebas
+   - Fundamentos jurídicos de la decisión (leyes, principios, precedentes)
+   - Justificación de por qué se da o se niega lo solicitado
 
-Always use Markdown formatting so the citizen-friendly judgment’s structure is easy to follow.
+4. **Puntos Resolutivos**
+   - Órdenes específicas del juez o jueza
+   - Qué se concede o se niega, y qué debe hacerse
+
+---
+
+## Estructura que Debe Seguir la IA para Crear Sentencias Ciudadanas
+
+La IA debe transformar la sentencia formal en una versión **narrada, directa y amigable**, con frases cortas y sin tecnicismos. El formato de salida debe ser en **texto plano bien estructurado** (no usar Markdown).
+
+### 1. Inicio: ¿De qué trata esta sentencia?
+
+Un párrafo breve que debe incluir:
+- Nombre del tribunal
+- Lugar y fecha de la sentencia
+- Número de expediente
+- Tipo de juicio (civil, penal, familiar, etc.)
+- Si es una sentencia final o una decisión intermedia
+
+### 2. Personas y hechos: ¿Qué pasó y quiénes están involucrados?
+
+Explica, en lenguaje claro:
+- Quién demandó y por qué
+- Quién fue demandado o acusado
+- Qué pidió cada parte
+- Qué hechos importantes ocurrieron según cada parte
+
+### 3. Análisis: ¿Qué decidió el juez y por qué?
+
+Describe:
+- El problema legal que se resolvió
+- Las pruebas que consideró el tribunal
+- La razón principal de la decisión (**ratio decidendi**), explicada en palabras simples
+- Enfatiza que no se trata de “ganar o perder”, sino de reconocer derechos con base en pruebas
+
+### 4. Decisión: ¿Qué ordenó el tribunal?
+
+Expón con claridad:
+- Qué se concede o se niega
+- Qué debe hacer cada parte
+- Próximos pasos o plazos importantes
+- Usa listas o numeración si es necesario para mayor claridad
+
+---
+
+## Principios clave de redacción para la IA
+
+- No usar lenguaje técnico. Si no puede evitarse, explicar el término en palabras simples.
+- Usar frases cortas, tono directo y claro.
+- No copiar partes de la sentencia. Reescribir en lenguaje ciudadano.
+- Mantener todos los datos clave (nombres, fechas, montos, hechos).
+- Ignorar elementos administrativos como sellos, firmas o códigos QR.
+- El resultado debe ser un **texto plano, bien organizado y fácil de leer**, no un documento legal.
+
+---
+
+## Objetivo Final
+
+> Que cualquier persona, sin importar su nivel educativo, pueda entender qué decidió el tribunal y cómo eso afecta su vida.
+
