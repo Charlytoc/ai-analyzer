@@ -1,7 +1,7 @@
 // src/api.ts
 import axios from "axios";
 
-export const API_URL = "http://localhost:8005";
+export const API_URL = "http://localhost:8006";
 
 export const generateSentenceBrief = async (formData: FormData) => {
   try {

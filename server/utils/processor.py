@@ -1,7 +1,6 @@
 import os
 import hashlib
 import json
-
 from typing import Literal
 from pydantic import BaseModel, Field, field_validator
 from server.utils.pdf_reader import DocumentReader
@@ -79,27 +78,13 @@ def get_faq_results(doc_hash: str):
     return results_str
 
 
-DEFAULT_WARNING_TEXT = """⚠️ Aviso Importante:
-
-El contenido mostrado, incluyendo: textos, gráficos, imágenes u otro tipo de material incluido en el sitio web denominado ‘Sentencia Ciudadana’, tiene exclusivamente una finalidad informativa de lectura simple. Por tanto, no debe ser entendido o concebido como un sustituto de la resolución judicial; en consecuencia, el texto mostrado no tiene ningún valor legal.
-
-Este resumen fue generado automáticamente por inteligencia artificial para facilitar la comprensión general del/los adjunto(s). Puede contener errores u omisiones debido a la calidad del texto, del archivo original o a su complejidad.
-"""
-
-
-def get_warning_text():
-    warning_text = os.getenv("WARNING_TEXT", DEFAULT_WARNING_TEXT)
-    if not warning_text:
-        return DEFAULT_WARNING_TEXT
-    return warning_text
-
-
 def translate_to_spanish(text: str):
     system_prompt = """
     Your task is to translate the given text to spanish, preserve the original meaning and structure of the text. Return only the translated text, without any other text or explanation. Your unique response must be the translated text.
     """
     ai_interface = AIInterface(
-        provider=os.getenv("PROVIDER", "ollama"), api_key=os.getenv("OLLAMA_API_KEY")
+        provider=os.getenv("PROVIDER", "ollama"),
+        api_key=os.getenv("PROVIDER_API_KEY", "asdasd"),
     )
     response = ai_interface.chat(
         messages=[
@@ -109,6 +94,23 @@ def translate_to_spanish(text: str):
         model=os.getenv("MODEL", "gemma3"),
     )
     return response
+
+
+def clean_markdown_block(text: str) -> str:
+    stripped = text.strip()
+
+    if not stripped.startswith("```markdown"):
+        return text
+
+    # Remove the opening line
+    content = stripped[len("```markdown") :].lstrip()
+
+    # Find the last occurrence of closing ```
+    closing_index = content.rfind("```")
+    if closing_index == -1:
+        return text  # No proper closing block
+
+    return content[:closing_index].rstrip()
 
 
 def generate_sentence_brief(
@@ -122,7 +124,8 @@ def generate_sentence_brief(
     use_cache = extra.get("use_cache", True)
 
     ai_interface = AIInterface(
-        provider=os.getenv("PROVIDER", "ollama"), api_key=os.getenv("OLLAMA_API_KEY")
+        provider=os.getenv("PROVIDER", "ollama"),
+        api_key=os.getenv("PROVIDER_API_KEY", "asdasd"),
     )
 
     system_prompt = get_system_prompt()
@@ -194,35 +197,124 @@ def generate_sentence_brief(
             f"<image_text name={image_path}>: {image_text} </image_text>"
         )
 
+    user_message_text = f"# TEXT FROM ALL SOURCES\n\n{text_from_all_documents}"
+    feedback_text = get_feedback_from_vector_store(user_message_text)
+    if feedback_text:
+        user_message_text += f"\n\n# You previously received this feedback on other sentences, try to not repeat yourself and avoid the same mistakes:\n\n{feedback_text}"
+
     messages.append(
         {
             "role": "user",
-            "content": f"# TEXT FROM ALL SOURCES\n\n{text_from_all_documents}",
+            "content": user_message_text,
         }
     )
 
     messages_json = json.dumps(messages, sort_keys=True, indent=4)
-    # Save the messages to a file
-    with open("messages.json", "w", encoding="utf-8") as f:
-        f.write(messages_json)
     messages_hash = hashlib.sha256(messages_json.encode("utf-8")).hexdigest()
 
+    redis_cache.set(
+        f"messages_input:{messages_hash}", messages_json, ex=EXPIRATION_TIME
+    )
+
     if use_cache:
-        cached_response = redis_cache.get(messages_hash)
+        cached_response = redis_cache.get(f"sentence_brief:{messages_hash}")
         if cached_response:
             printer.green(f"👀 Sentencia ciudadana cacheada: {messages_hash}")
-            return cached_response, True
+            return cached_response, True, messages_hash
 
     printer.red(f"🔍 No se encontró la sentencia ciudadana en cache: {messages_hash}")
     response = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
+    response = clean_markdown_block(response)
     if not is_spanish(response[:150]):
         printer.red("🔍 La respuesta no está en español, traduciendo...")
         response = translate_to_spanish(response)
+        response = clean_markdown_block(response)
     else:
         printer.green("🔍 La respuesta ya está en español en el primer intento.")
-    response = response + "\n\n" + get_warning_text()
 
-    redis_cache.set(messages_hash, response, ex=EXPIRATION_TIME)
+    redis_cache.set(f"sentence_brief:{messages_hash}", response, ex=EXPIRATION_TIME)
     printer.green(f"💾 Sentencia ciudadana guardada en cache: {messages_hash}")
 
-    return response, False
+    return response, False, messages_hash
+
+
+def update_sentence_brief(hash: str, changes: str):
+    sentence = redis_cache.get(f"sentence_brief:{hash}")
+    previous_messages = redis_cache.get(f"messages_input:{hash}")
+    previous_messages = json.loads(previous_messages)
+    previous_messages.append(
+        {
+            "role": "user",
+            "content": f"Por favor realiza cambios, no estoy conforme con el resultado. Los cambios que debes realizar son: {changes}",
+        }
+    )
+    if not sentence:
+        raise ValueError("No se encontró la sentencia ciudadana.")
+
+    ai_interface = AIInterface(
+        provider=os.getenv("PROVIDER", "ollama"),
+        api_key=os.getenv("PROVIDER_API_KEY", "asdasd"),
+    )
+    response = ai_interface.chat(
+        messages=previous_messages,
+        model=os.getenv("MODEL", "gemma3"),
+    )
+
+    return response
+
+
+def generate_id(text: str) -> str:
+    return hashlib.md5(text.encode("utf-8")).hexdigest()
+
+
+def get_user_message_partial_text(messages: list[dict]):
+    for message in messages:
+        if message["role"] == "user":
+            return message["content"][:1000]
+    return ""
+
+
+def upsert_feedback_in_vector_store(hash: str, feedback: str):
+    try:
+        previous_messages = redis_cache.get(f"messages_input:{hash}")
+        previous_messages = json.loads(previous_messages)
+        partial_text = get_user_message_partial_text(previous_messages)
+
+        if not partial_text:
+            raise ValueError("No se encontró el mensaje del usuario.")
+
+        chroma_client.upsert_chunk(
+            collection_name="sentence_feedbacks",
+            chunk_text=partial_text,
+            chunk_id=f"feedback_{generate_id(partial_text)}",
+            metadata={"feedback": feedback},
+        )
+
+        printer.green(f"💾 Feedback guardado en vector store: {feedback}")
+
+        return True
+    except Exception as e:
+        printer.red(f"❌ Error al guardar el feedback en el vector store: {e}")
+        return False
+
+
+def get_feedback_from_vector_store(documents_text: str):
+    trimmed_text = documents_text[:1000]
+    try:
+        printer.blue("🔍 Buscando feedback en vector store...")
+        chunks = chroma_client.get_results(
+            collection_name="sentence_feedbacks",
+            query_texts=[trimmed_text],
+            n_results=5,
+        )
+        printer.green("🔍 Feedback encontrado:", chunks)
+        feedbacks = []
+        for i in range(len(chunks["metadatas"])):
+            feedback = chunks["metadatas"][i][0]["feedback"]
+            feedbacks.append(feedback)
+
+        printer.green(f"🔍 Feedback encontrado: {feedbacks}")
+        return "\n".join(feedbacks)
+    except Exception as e:
+        printer.red(f"❌ Error al obtener el feedback del vector store: {e}")
+        return ""

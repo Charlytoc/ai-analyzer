@@ -1,8 +1,8 @@
+import os
 import shutil
 import subprocess
 import requests
 from ollama import Client
-import os
 from .printer import Printer
 from openai import OpenAI
 
@@ -57,6 +57,21 @@ def get_physical_context() -> str:
             except Exception as e:
                 printer.red(f"Error reading file {file}: {e}")
     return context
+
+
+DEFAULT_WARNING_TEXT = """⚠️ Aviso Importante:
+
+El contenido mostrado, incluyendo: textos, gráficos, imágenes u otro tipo de material incluido en el sitio web denominado ‘Sentencia Ciudadana’, tiene exclusivamente una finalidad informativa de lectura simple. Por tanto, no debe ser entendido o concebido como un sustituto de la resolución judicial; en consecuencia, el texto mostrado no tiene ningún valor legal.
+
+Este resumen fue generado automáticamente por inteligencia artificial para facilitar la comprensión general del/los adjunto(s). Puede contener errores u omisiones debido a la calidad del texto, del archivo original o a su complejidad.
+"""
+
+
+def get_warning_text():
+    warning_text = os.getenv("WARNING_TEXT", DEFAULT_WARNING_TEXT)
+    if not warning_text:
+        return DEFAULT_WARNING_TEXT
+    return warning_text
 
 
 def check_ollama_installation() -> dict:

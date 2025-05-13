@@ -3,16 +3,21 @@ from fastapi import APIRouter, UploadFile, File, Form
 import shutil
 import os
 
+from pydantic import BaseModel
+
 # import numpy as np
 from typing import List
 from fastapi import HTTPException
 
 from server.utils.printer import Printer
 from server.utils.redis_cache import RedisCache
-from server.utils.processor import generate_sentence_brief
+from server.utils.processor import (
+    generate_sentence_brief,
+    update_sentence_brief,
+    upsert_feedback_in_vector_store,
+)
 from server.ai.vector_store import chroma_client
-
-# from server.utils.ai_interface import AIInterface
+from server.utils.ai_interface import get_warning_text
 
 UPLOADS_PATH = "uploads"
 os.makedirs(f"{UPLOADS_PATH}/images", exist_ok=True)
@@ -23,61 +28,78 @@ printer = Printer("ROUTES")
 redis_cache = RedisCache()
 
 
-# def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
-#     return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
+@router.get("/sentencia/{hash}")
+async def get_sentence_brief_route(hash: str):
+
+    sentencia = redis_cache.get(f"sentence_brief:{hash}")
+    if not sentencia:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "status": "ERROR",
+                "message": "No se encontró la sentencia ciudadana.",
+            },
+        )
+
+    return {
+        "status": "SUCCESS",
+        "message": "Sentencia ciudadana generada con éxito.",
+        "sentence": sentencia,
+    }
 
 
-# def euclidean_distance(a: np.ndarray, b: np.ndarray) -> float:
-#     return float(np.linalg.norm(a - b))
+class SentenceUpdatePayload(BaseModel):
+    sentence: str
 
 
-# @router.post("/compare-embeddings")
-# async def compare_embeddings_route(body: dict = Body(...)):
-#     target_text = body.get("target_text")
-#     compares = body.get("compares", [])
-#     func = body.get("function", "cosine").lower()
-
-#     if not target_text or not compares or func not in {"cosine", "euclidean"}:
-#         raise HTTPException(400, "Payload inválido.")
-
-#     ai = AIInterface(provider="ollama", api_key="")
-#     try:
-#         # 1) Embed y aplanar a 1D
-#         t_emb = np.array(ai.embed(target_text)["embeddings"]).flatten()
-#         c_embs = [np.array(ai.embed(text)["embeddings"]).flatten() for text in compares]
-#     except Exception as e:
-#         raise HTTPException(500, f"Error al embed: {e}")
-
-#     # 2) Elige función
-#     comparator = cosine_similarity if func == "cosine" else euclidean_distance
-#     metric = "cosine similarity" if func == "cosine" else "euclidean distance"
-
-#     # 3) Calcula scores
-#     results = []
-#     for text, emb in zip(compares, c_embs):
-#         score = comparator(t_emb, emb)
-#         results.append({"text": text, "score": score})
-
-#     return {"status": "OK", "metric": metric, "results": results}
+@router.put("/sentencia/{hash}")
+async def update_sentence_brief_route(hash: str, payload: SentenceUpdatePayload):
+    try:
+        redis_cache.set(f"sentence_brief:{hash}", payload.sentence)
+        return {
+            "status": "SUCCESS",
+            "message": "Sentencia ciudadana actualizada con éxito.",
+            "sentence": payload.sentence,
+        }
+    except Exception as e:
+        printer.red(f"❌ Error al actualizar la sentencia ciudadana: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail={"status": "ERROR", "message": str(e)},
+        )
 
 
-# @router.post("/embed-text")
-# async def embed_text_route(payload: dict = Body(...)):
-#     text = payload.get("text")
-#     ai_interface = AIInterface(provider="ollama", api_key="")
-#     try:
-#         result = ai_interface.embed(text)
-#         vector = result["embeddings"]
-#         # Save the vector result as vector.json
-#         with open("vector.json", "w") as f:
-#             json.dump(vector, f)
-#         return {"status": "OK", "embedding": vector}
-#     except Exception as e:
-#         printer.red(f"❌ Error al generar el embedding: {e}")
-#         raise HTTPException(
-#             status_code=500,
-#             detail={"status": "ERROR", "message": str(e)},
-#         )
+class SentenceRequestChangesPayload(BaseModel):
+    changes: str
+
+
+@router.post("/sentencia/{hash}/request-changes")
+async def request_changes_route(hash: str, payload: SentenceRequestChangesPayload):
+    try:
+        sentence = redis_cache.get(f"sentence_brief:{hash}")
+        if not sentence:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "status": "ERROR",
+                    "message": "No se encontró la sentencia ciudadana.",
+                },
+            )
+
+        sentence = update_sentence_brief(hash, payload.changes)
+        upsert_feedback_in_vector_store(hash, payload.changes)
+        return {
+            "status": "SUCCESS",
+            "message": "Cambios realizados con éxito.",
+            "changes": payload.changes,
+            "sentence": sentence,
+        }
+    except Exception as e:
+        printer.red(f"❌ Error al solicitar cambios: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail={"status": "ERROR", "message": str(e)},
+        )
 
 
 @router.post("/generate-sentence-brief")
@@ -125,10 +147,16 @@ async def generate_sentence_brief_route(
             except json.JSONDecodeError:
                 printer.red("❌ Error al decodificar el JSON enviado en extra_data")
 
-        resumen, cache_used = generate_sentence_brief(
+        resumen, cache_used, hash_messages = generate_sentence_brief(
             document_paths, images_paths, extra_info
         )
-        printer.green(f"✅ Sentencia ciudadana generada con éxito:\n{resumen}")
+
+        resumen = resumen + "\n\n" + get_warning_text()
+
+        if cache_used:
+            printer.green(f"✅ Sentencia ciudadana generada con caché:\n{resumen}")
+        else:
+            printer.red(f"❌ Sentencia ciudadana generada sin caché:\n{resumen}")
 
         return {
             "status": "SUCCESS",
@@ -137,6 +165,7 @@ async def generate_sentence_brief_route(
             "n_documents": len(document_paths),
             "n_images": len(images_paths),
             "cache_used": cache_used,
+            "hash": hash_messages,
         }
     except Exception as e:
         printer.red(f"❌ Error al generar la sentencia ciudadana: {e}")
