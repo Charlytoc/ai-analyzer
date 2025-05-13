@@ -51,6 +51,9 @@ Convertir una sentencia judicial en un documento que:
 - **La salida debe estar en texto plano, no uses Markdown ni ningún formato especial.**
 - Organiza el contenido con subtítulos claros y listas cuando sea útil.
 - Escribe como si explicaras la sentencia a una persona sin secundaria.
+- Tu respuesta debe estar en formato markdown, bien estructurado para su facil comprensión.
+
+
 
 ---
 

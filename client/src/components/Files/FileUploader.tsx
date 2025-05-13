@@ -56,7 +56,7 @@ export const FileUploader: React.FC<Props> = ({ onUploadSuccess }) => {
       setIsOpen(false);
       setIsLoading(false);
       toast.success("Resumen generado con éxito", { id: tid });
-      console.log(resumen, "resumen");
+      console.log(resumen.hash, "resumen");
       if (onUploadSuccess) onUploadSuccess({ brief: resumen.brief });
     } catch (error) {
       console.error("Error al enviar datos:", error);
