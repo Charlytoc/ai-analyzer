@@ -107,8 +107,8 @@ async def auth_and_cors(request: Request, call_next):
         )
 
         payload = {"access_token": token}
-        printer.yellow("Validando token...", payload)
-        async with httpx.AsyncClient(timeout=10) as client:
+        printer.yellow(f"Validando token en {validate_url}...", payload)
+        async with httpx.AsyncClient(timeout=5) as client:
             headers = {"Content-Type": "application/x-www-form-urlencoded"}
             body = urlencode(payload)
             resp = await client.post(validate_url, data=body, headers=headers)
