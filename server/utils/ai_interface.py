@@ -140,7 +140,7 @@ class OllamaProvider:
             messages=messages,
             tools=tools,
             stream=stream,
-            options={"num_ctx": 50000},
+            options={"num_ctx": 70000},
         )
         return response.message.content
 

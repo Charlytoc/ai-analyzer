@@ -211,7 +211,6 @@ def generate_sentence_brief(
 
     feedback_text = get_feedback_from_vector_store(user_message_text)
     if feedback_text:
-        printer.blue("🔍 Feedback encontrado:")
         messages.append(
             {
                 "role": "user",
@@ -313,7 +312,7 @@ def get_feedback_from_vector_store(documents_text: str):
             query_texts=[trimmed_text],
             n_results=5,
         )
-        printer.green("🔍 Feedback encontrado:", chunks)
+ 
         feedbacks = []
         for i in range(len(chunks["metadatas"])):
             feedback = chunks["metadatas"][i][0]["feedback"]
