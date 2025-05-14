@@ -17,7 +17,7 @@ from server.utils.processor import (
     upsert_feedback_in_vector_store,
 )
 from server.ai.vector_store import chroma_client
-from server.utils.ai_interface import get_warning_text
+
 
 UPLOADS_PATH = "uploads"
 os.makedirs(f"{UPLOADS_PATH}/images", exist_ok=True)
@@ -151,7 +151,6 @@ async def generate_sentence_brief_route(
             document_paths, images_paths, extra_info
         )
 
-        resumen = resumen + "\n\n" + get_warning_text()
 
         if cache_used:
             printer.green(f"✅ Sentencia ciudadana generada con caché:\n{resumen}")

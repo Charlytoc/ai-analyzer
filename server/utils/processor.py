@@ -11,6 +11,7 @@ from server.utils.ai_interface import (
     get_physical_context,
     get_faq_questions,
     get_system_prompt,
+    get_warning_text
 )
 from server.utils.image_reader import ImageReader
 from server.ai.vector_store import chroma_client
@@ -237,6 +238,7 @@ def generate_sentence_brief(
     else:
         printer.green("🔍 La respuesta ya está en español en el primer intento.")
 
+    response = response + "\n\n" + get_warning_text()
     redis_cache.set(f"sentence_brief:{messages_hash}", response, ex=EXPIRATION_TIME)
     printer.green(f"💾 Sentencia ciudadana guardada en cache: {messages_hash}")
 
@@ -312,7 +314,7 @@ def get_feedback_from_vector_store(documents_text: str):
             query_texts=[trimmed_text],
             n_results=5,
         )
- 
+
         feedbacks = []
         for i in range(len(chunks["metadatas"])):
             feedback = chunks["metadatas"][i][0]["feedback"]
