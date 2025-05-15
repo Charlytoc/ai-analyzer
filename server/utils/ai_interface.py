@@ -11,6 +11,7 @@ printer = Printer("AI INTERFACE")
 CONTEXT_DIR = os.getenv("CONTEXT_DIR", "server/ai/context")
 FAQ_FILE_PATH = os.path.join(CONTEXT_DIR, "FAQ.txt")
 SYSTEM_PROMPT_FILE_PATH = os.path.join(CONTEXT_DIR, "SYSTEM.txt")
+SYSTEM_EDITOR_PROMPT_FILE_PATH = os.path.join(CONTEXT_DIR, "SYSTEM_EDITOR.txt")
 
 
 def get_faq_questions() -> list[str]:
@@ -41,10 +42,24 @@ def get_system_prompt() -> str:
         return f.read()
 
 
+def get_system_editor_prompt() -> str:
+    """
+    Lee el prompt del sistema desde el archivo.
+    Lanza FileNotFoundError si no existe el archivo.
+    """
+    if not os.path.exists(SYSTEM_EDITOR_PROMPT_FILE_PATH):
+        raise FileNotFoundError(
+            f"Archivo de prompt del sistema para el editor no encontrado: {SYSTEM_EDITOR_PROMPT_FILE_PATH}"
+        )
+
+    with open(SYSTEM_EDITOR_PROMPT_FILE_PATH, "r", encoding="utf-8") as f:
+        return f.read()
+
+
 def get_physical_context() -> str:
     context_files = os.listdir("server/ai/context")
     valid_extensions = (".md", ".txt", ".csv")
-    ignored_files = {"SYSTEM.txt", "FAQ.txt"}
+    ignored_files = {"SYSTEM.txt", "FAQ.txt", "SYSTEM_EDITOR.txt"}
 
     context = ""
     for file in context_files:

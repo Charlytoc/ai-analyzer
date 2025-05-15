@@ -1,6 +1,7 @@
 import os
 import hashlib
 import json
+
 from typing import Literal
 from pydantic import BaseModel, Field, field_validator
 from server.utils.pdf_reader import DocumentReader
@@ -11,6 +12,7 @@ from server.utils.ai_interface import (
     get_physical_context,
     get_faq_questions,
     get_system_prompt,
+    get_system_editor_prompt,
 )
 from server.utils.image_reader import ImageReader
 from server.ai.vector_store import chroma_client
@@ -19,6 +21,7 @@ from server.utils.detectors import is_spanish
 EXPIRATION_TIME = 60 * 60 * 24 * 30
 LIMIT_CHARACTERS_FOR_TEXT = 100000
 
+N_CHARACTERS_FOR_FEEDBACK_VECTORIZATION = 2000
 
 printer = Printer("ROUTES")
 redis_cache = RedisCache()
@@ -97,20 +100,21 @@ def translate_to_spanish(text: str):
 
 
 def clean_markdown_block(text: str) -> str:
-    stripped = text.strip()
+    start_tag = "```markdown"
+    end_tag = "```"
 
-    if not stripped.startswith("```markdown"):
+    start_index = text.find(start_tag)
+    if start_index == -1:
         return text
 
-    # Remove the opening line
-    content = stripped[len("```markdown") :].lstrip()
+    start_index += len(start_tag)
+    end_index = text.find(end_tag, start_index)
+    if end_index == -1:
+        return text
 
-    # Find the last occurrence of closing ```
-    closing_index = content.rfind("```")
-    if closing_index == -1:
-        return text  # No proper closing block
-
-    return content[:closing_index].rstrip()
+    printer.yellow("🔍 La respusta está dentro de un bloque markdown, limpiando...")
+    content = text[start_index:end_index]
+    return content.strip()
 
 
 def generate_sentence_brief(
@@ -244,14 +248,29 @@ def generate_sentence_brief(
     return response, False, messages_hash
 
 
+def update_system_prompt(previous_messages: list[dict], new_system_prompt: str):
+
+    for message in previous_messages:
+        if message["role"] == "system":
+            message["content"] = new_system_prompt
+
+    previous_messages = previous_messages[:2]
+    return previous_messages
+
+
 def update_sentence_brief(hash: str, changes: str):
     sentence = redis_cache.get(f"sentence_brief:{hash}")
     previous_messages = redis_cache.get(f"messages_input:{hash}")
     previous_messages = json.loads(previous_messages)
+    system_editor_prompt = get_system_editor_prompt()
+    previous_messages = update_system_prompt(
+        previous_messages,
+        system_editor_prompt.replace("{{sentencia}}", sentence),
+    )
     previous_messages.append(
         {
             "role": "user",
-            "content": f"Por favor realiza cambios, no estoy conforme con el resultado. Debes retornar únicamente el texto en Español con los cambios realizados. Los cambios que debes realizar son: {changes}",
+            "content": f"Por favor realiza cambios en la sentencia ciudadana, no estoy conforme con el resultado. Debes retornar únicamente el texto en Español con los cambios realizados. Los cambios que debes realizar son: {changes}",
         }
     )
     if not sentence:
@@ -265,6 +284,7 @@ def update_sentence_brief(hash: str, changes: str):
         messages=previous_messages,
         model=os.getenv("MODEL", "gemma3"),
     )
+    response = clean_markdown_block(response)
 
     return response
 
@@ -276,7 +296,7 @@ def generate_id(text: str) -> str:
 def get_user_message_partial_text(messages: list[dict]):
     for message in messages:
         if message["role"] == "user":
-            return message["content"][:1000]
+            return message["content"][:N_CHARACTERS_FOR_FEEDBACK_VECTORIZATION]
     return ""
 
 
@@ -305,13 +325,13 @@ def upsert_feedback_in_vector_store(hash: str, feedback: str):
 
 
 def get_feedback_from_vector_store(documents_text: str):
-    trimmed_text = documents_text[:1000]
+    trimmed_text = documents_text[:N_CHARACTERS_FOR_FEEDBACK_VECTORIZATION]
     try:
         printer.blue("🔍 Buscando feedback en vector store...")
         chunks = chroma_client.get_results(
             collection_name="sentence_feedbacks",
             query_texts=[trimmed_text],
-            n_results=5,
+            n_results=10,
         )
 
         feedbacks = []
