@@ -10,31 +10,33 @@ Convertir una sentencia judicial en un documento que:
 
 ## 📌 Estructura esperada de la Sentencia Ciudadana:
 
-1. ¿De qué trata esta sentencia?
+# Titulo de la sentencia (Depende del contenido de la misma. Ej: Sentencia Ciudadana sobre el caso)
+
+### ¿De qué trata esta sentencia?
    - Tribunal, lugar y fecha
    - Número de expediente
    - Tipo de juicio (civil, penal, etc.)
    - ¿Qué se está decidiendo? ¿Es una sentencia final o una decisión intermedia?
 
-2. ¿Quiénes son las personas involucradas?
+### ¿Quiénes son las personas involucradas?
    - ¿Quién demandó y por qué?
    - ¿Quién fue acusado o demandado?
    - ¿Qué pidió cada parte?
    - ¿Qué hechos importantes ocurrieron?
 
-3. ¿Qué decidió la jueza o el juez y por qué?
+### ¿Qué decidió la jueza o el juez y por qué?
    - ¿Cuál fue el problema legal que analizó?
    - ¿Qué pruebas se tomaron en cuenta?
    - Explica la razón legal (ratio decidendi) en lenguaje común.
      Por ejemplo:  
      "La jueza decidió que Juan debía pagar porque había pruebas de que firmó un contrato que no cumplió."
 
-4. ¿Qué ordenó el juez?
+### ¿Qué ordenó el juez?
    - Acciones que deben cumplirse
    - Fechas importantes o próximos pasos
    - Usa listas numeradas o con viñetas para mayor claridad
 
-5. En resumen... ¿qué significa todo esto?
+### Resumen
    - Explica en pocas frases lo esencial de la decisión
    - Enfatiza cómo afecta a las personas involucradas
    - Usa comparaciones o ejemplos si ayudan a entender
@@ -48,12 +50,10 @@ Convertir una sentencia judicial en un documento que:
 - No repitas partes de la sentencia. Reescribe en lenguaje ciudadano.
 - Preserva nombres, fechas, montos, hechos y cualquier dato relevante.
 - Ignora sellos, firmas digitales, encabezados o QR; solo importa el contenido.
-- **La salida debe estar en texto plano, no uses Markdown ni ningún formato especial.**
 - Organiza el contenido con subtítulos claros y listas cuando sea útil.
 - Escribe como si explicaras la sentencia a una persona sin secundaria.
-- Tu respuesta debe estar en formato markdown, bien estructurado para su facil comprensión.
-
-
+- El resultado debe ser un texto en formato Markdown con una buena estructura de títulos y subtítulos, explicando el contenido de la sentencia de manera clara y concisa.
+- Tu respuesta SIEMPRE debe estar en Español sin ningún tipo de excepción.
 
 ---
 

@@ -11,7 +11,6 @@ from server.utils.ai_interface import (
     get_physical_context,
     get_faq_questions,
     get_system_prompt,
-    get_warning_text
 )
 from server.utils.image_reader import ImageReader
 from server.ai.vector_store import chroma_client
@@ -238,7 +237,7 @@ def generate_sentence_brief(
     else:
         printer.green("🔍 La respuesta ya está en español en el primer intento.")
 
-    response = response + "\n\n" + get_warning_text()
+    response = response
     redis_cache.set(f"sentence_brief:{messages_hash}", response, ex=EXPIRATION_TIME)
     printer.green(f"💾 Sentencia ciudadana guardada en cache: {messages_hash}")
 
@@ -252,7 +251,7 @@ def update_sentence_brief(hash: str, changes: str):
     previous_messages.append(
         {
             "role": "user",
-            "content": f"Por favor realiza cambios, no estoy conforme con el resultado. Los cambios que debes realizar son: {changes}",
+            "content": f"Por favor realiza cambios, no estoy conforme con el resultado. Debes retornar únicamente el texto en Español con los cambios realizados. Los cambios que debes realizar son: {changes}",
         }
     )
     if not sentence:

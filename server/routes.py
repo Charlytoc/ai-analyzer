@@ -16,6 +16,7 @@ from server.utils.processor import (
     update_sentence_brief,
     upsert_feedback_in_vector_store,
 )
+from server.utils.ai_interface import get_warning_text
 from server.ai.vector_store import chroma_client
 
 
@@ -151,7 +152,6 @@ async def generate_sentence_brief_route(
             document_paths, images_paths, extra_info
         )
 
-
         if cache_used:
             printer.green(f"✅ Sentencia ciudadana generada con caché:\n{resumen}")
         else:
@@ -165,6 +165,7 @@ async def generate_sentence_brief_route(
             "n_images": len(images_paths),
             "cache_used": cache_used,
             "hash": hash_messages,
+            "warning": get_warning_text(),
         }
     except Exception as e:
         printer.red(f"❌ Error al generar la sentencia ciudadana: {e}")
