@@ -2,8 +2,10 @@ import json
 
 import traceback
 from fastapi import APIRouter, UploadFile, File, Form
-from starlette.concurrency import run_in_threadpool
 
+# from starlette.concurrency import run_in_threadpool
+
+from concurrent.futures import ProcessPoolExecutor
 import shutil
 import os
 
@@ -22,10 +24,9 @@ from server.utils.processor import (
     upsert_feedback_in_vector_store,
 )
 from server.utils.ai_interface import get_warning_text
-from server.ai.vector_store import chroma_client
 
-
-MAX_CONCURRENT_REQUESTS = 5
+process_pool = ProcessPoolExecutor(max_workers=10)
+MAX_CONCURRENT_REQUESTS = 10
 semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
 
 UPLOADS_PATH = "uploads"
@@ -97,8 +98,8 @@ async def request_changes_route(hash: str, payload: SentenceRequestChangesPayloa
                 )
 
             printer.yellow("🔄 Actualizando sentencia ciudadana en otro hilo...")
-            sentence = await run_in_threadpool(
-                update_sentence_brief, hash, payload.changes
+            sentence = await asyncio.get_running_loop().run_in_executor(
+                process_pool, update_sentence_brief, hash, payload.changes
             )
 
             upsert_feedback_in_vector_store(hash, payload.changes)
@@ -124,7 +125,7 @@ async def generate_sentence_brief_route(
 ):
     async with semaphore:
         try:
-            printer.yellow("🔄 Generando sentencia ciudadana...")
+            # printer.yellow("🔄 Generando sentencia ciudadana...")
 
             # Validación de archivos
             if not images and not documents:
@@ -165,9 +166,17 @@ async def generate_sentence_brief_route(
                         "❌ Error al decodificar el JSON enviado en extra_data"
                     )
 
-            printer.yellow("🔄 Generando sentencia ciudadana en otro hilo...")
-            resumen, cache_used, hash_messages = await run_in_threadpool(
-                generate_sentence_brief, document_paths, images_paths, extra_info
+            printer.yellow("🔄 Generando sentencia ciudadana en otro proceso...")
+            (
+                resumen,
+                cache_used,
+                hash_messages,
+            ) = await asyncio.get_running_loop().run_in_executor(
+                process_pool,
+                generate_sentence_brief,
+                document_paths,
+                images_paths,
+                extra_info,
             )
 
             if cache_used:
@@ -176,6 +185,11 @@ async def generate_sentence_brief_route(
             else:
                 printer.magenta("✅ Sentencia ciudadana generada sin caché")
                 printer.green(resumen)
+
+            for image_path in images_paths:
+                os.remove(image_path)
+            for document_path in document_paths:
+                os.remove(document_path)
 
             return {
                 "status": "SUCCESS",

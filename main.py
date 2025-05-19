@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 
 from server.utils.ai_interface import check_ollama_installation
 from server.utils.printer import Printer
-from server.routes import router
+from server.routes import router, process_pool
 from server.utils.ai_interface import AIInterface
 
 printer = Printer("MAIN")
@@ -44,6 +44,7 @@ async def lifespan(app: FastAPI):
         printer.error("🔴 Ollama no está instalado, por favor instálalo primero")
 
     yield
+    process_pool.shutdown(wait=True)
 
 
 app = FastAPI(lifespan=lifespan)
