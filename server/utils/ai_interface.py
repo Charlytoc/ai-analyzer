@@ -159,10 +159,10 @@ class OllamaProvider:
             tools=tools,
             stream=stream,
             options={
-                "num_ctx": context_window_size,
-                "num_keep": 15,
-                "num_thread": 10,
-                "temperature": 0.8,
+                "num_ctx": context_window_size
+                # "num_keep": 15,
+                # "num_thread": 10,
+                # "temperature": 0.8,
             },
         )
         return response.message.content
