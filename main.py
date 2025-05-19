@@ -100,7 +100,8 @@ async def auth_and_cors(request: Request, call_next):
                 status_code=403, content={"detail": f"IP '{client_ip}' no permitida."}
             )
 
-    CHECK_AUTH = ENVIRONMENT == "prod"
+    # CHECK_AUTH = ENVIRONMENT == "prod"
+    CHECK_AUTH = False
     if CHECK_AUTH:
         auth: str = request.headers.get("Authorization", "")
         if not auth.startswith("Bearer "):
@@ -129,9 +130,7 @@ async def auth_and_cors(request: Request, call_next):
                 status_code=401, content={"detail": "Invalid or expired token."}
             )
     else:
-        printer.yellow(
-            "No se validó el token, se asume que es un request de desarrollo"
-        )
+        printer.yellow("No se validó el token")
     printer.green("Una solicitud fue permitida con éxito")
     return await call_next(request)
 
