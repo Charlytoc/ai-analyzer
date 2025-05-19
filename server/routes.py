@@ -1,4 +1,5 @@
 import json
+import traceback
 from fastapi import APIRouter, UploadFile, File, Form
 from starlette.concurrency import run_in_threadpool
 
@@ -177,7 +178,9 @@ async def generate_sentence_brief_route(
             "warning": get_warning_text(),
         }
     except Exception as e:
+        tb = traceback.format_exc()
         printer.error(f"❌ Error al generar la sentencia ciudadana: {e}")
+        printer.error(tb)
         raise HTTPException(
             status_code=500,
             detail={"status": "ERROR", "message": str(e)},
