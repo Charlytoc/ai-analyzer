@@ -70,7 +70,7 @@ def get_physical_context() -> str:
                     context += f.read()
                     context += "</FILE>\n"
             except Exception as e:
-                printer.red(f"Error reading file {file}: {e}")
+                printer.error(f"Error reading file {file}: {e}")
     return context
 
 
@@ -149,13 +149,21 @@ class OllamaProvider:
         stream: bool = False,
         tools: list[dict] | list[callable] = [],
     ):
-        self.check_model(model)
+        # self.check_model(model)
+        printer.blue(f"Generating completion using: {model}")
+        context_window_size = int(os.getenv("CONTEXT_WINDOW_SIZE", 40000))
+        printer.blue(f"Context window size: {context_window_size}")
         response = self.client.chat(
             model=model,
             messages=messages,
             tools=tools,
             stream=stream,
-            options={"num_ctx": 70000},
+            options={
+                "num_ctx": context_window_size,
+                "num_keep": 15,
+                "num_thread": 10,
+                "temperature": 0.8,
+            },
         )
         return response.message.content
 
@@ -163,6 +171,9 @@ class OllamaProvider:
 class OpenAIProvider:
     def __init__(self, api_key: str):
         self.client = OpenAI(api_key=api_key)
+
+    def check_model(self, model: str):
+        return True
 
     def chat(
         self,
@@ -212,3 +223,6 @@ class AIInterface:
             tools=tools,
             stream=stream,
         )
+
+    def check_model(self, model: str):
+        return self.client.check_model(model)

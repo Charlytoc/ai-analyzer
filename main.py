@@ -1,6 +1,7 @@
 import os
 import httpx
 from urllib.parse import urlencode
+from datetime import datetime
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -11,6 +12,7 @@ from contextlib import asynccontextmanager
 from server.utils.ai_interface import check_ollama_installation
 from server.utils.printer import Printer
 from server.routes import router
+from server.utils.ai_interface import AIInterface
 
 printer = Printer("MAIN")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "prod").lower().strip()
@@ -26,12 +28,20 @@ os.makedirs("uploads/documents/read", exist_ok=True)
 async def lifespan(app: FastAPI):
     printer.yellow("🔍 Verificando instalación de Ollama")
     result = check_ollama_installation()
+    printer.error("Iniciando aplicación, hora: ", datetime.now())
     if result["installed"]:
+        ai = AIInterface(
+            provider=os.getenv("PROVIDER", "ollama"),
+            api_key=os.getenv("PROVIDER_API_KEY", "asdasd"),
+        )
         printer.green("🟢 Ollama está instalado")
         printer.green("Ollama version: ", result["version"])
         printer.green("Ollama server running: ", result["server_running"])
+        # check the model to use
+        model = os.getenv("MODEL", "gemma3:1b")
+        ai.check_model(model)
     else:
-        printer.red("🔴 Ollama no está instalado, por favor instálalo primero")
+        printer.error("🔴 Ollama no está instalado, por favor instálalo primero")
 
     yield
 
@@ -114,7 +124,7 @@ async def auth_and_cors(request: Request, call_next):
             resp = await client.post(validate_url, data=body, headers=headers)
             printer.yellow("Respuesta del servidor:", resp.text)
         if resp.status_code != 200:
-            printer.red("Token inválido o expirado")
+            printer.error(f"Token inválido o expirado: {resp.text}")
             return JSONResponse(
                 status_code=401, content={"detail": "Invalid or expired token."}
             )

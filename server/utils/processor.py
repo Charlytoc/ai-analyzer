@@ -1,7 +1,7 @@
 import os
 import hashlib
 import json
-
+import uuid
 from typing import Literal
 from pydantic import BaseModel, Field, field_validator
 from server.utils.pdf_reader import DocumentReader
@@ -21,7 +21,7 @@ from server.utils.detectors import is_spanish
 EXPIRATION_TIME = 60 * 60 * 24 * 30
 LIMIT_CHARACTERS_FOR_TEXT = 100000
 
-N_CHARACTERS_FOR_FEEDBACK_VECTORIZATION = 2000
+N_CHARACTERS_FOR_FEEDBACK_VECTORIZATION = 3000
 
 printer = Printer("ROUTES")
 redis_cache = RedisCache()
@@ -122,8 +122,8 @@ def generate_sentence_brief(
 ):
     physical_context = get_physical_context()
 
-    printer.blue("Usando Contexto Físico:")
-    printer.yellow(physical_context)
+    printer.debug("Usando Contexto Físico:")
+    printer.debug(physical_context)
 
     use_cache = extra.get("use_cache", True)
 
@@ -136,8 +136,8 @@ def generate_sentence_brief(
     if not system_prompt:
         raise ValueError("No se encontró el prompt del sistema.")
 
-    printer.blue("Usando System Prompt:")
-    printer.yellow(system_prompt)
+    printer.debug("Usando System Prompt:")
+    printer.debug(system_prompt)
 
     if physical_context:
         system_prompt = system_prompt.replace("{{context}}", physical_context)
@@ -231,11 +231,13 @@ def generate_sentence_brief(
             printer.green(f"👀 Sentencia ciudadana cacheada: {messages_hash}")
             return cached_response, True, messages_hash
 
-    printer.red(f"🔍 No se encontró la sentencia ciudadana en cache: {messages_hash}")
+    printer.yellow(
+        f"🔍 No se encontró la sentencia ciudadana en cache: {messages_hash}"
+    )
     response = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
     response = clean_markdown_block(response)
     if not is_spanish(response[:150]):
-        printer.red("🔍 La respuesta no está en español, traduciendo...")
+        printer.yellow("🔍 La respuesta no está en español, traduciendo...")
         response = translate_to_spanish(response)
         response = clean_markdown_block(response)
     else:
@@ -293,6 +295,10 @@ def generate_id(text: str) -> str:
     return hashlib.md5(text.encode("utf-8")).hexdigest()
 
 
+def generate_random_id():
+    return str(uuid.uuid4())
+
+
 def get_user_message_partial_text(messages: list[dict]):
     for message in messages:
         if message["role"] == "user":
@@ -312,7 +318,7 @@ def upsert_feedback_in_vector_store(hash: str, feedback: str):
         chroma_client.upsert_chunk(
             collection_name="sentence_feedbacks",
             chunk_text=partial_text,
-            chunk_id=f"feedback_{generate_id(partial_text)}",
+            chunk_id=f"feedback_{generate_random_id()}",
             metadata={"feedback": feedback},
         )
 
@@ -320,7 +326,7 @@ def upsert_feedback_in_vector_store(hash: str, feedback: str):
 
         return True
     except Exception as e:
-        printer.red(f"❌ Error al guardar el feedback en el vector store: {e}")
+        printer.error(f"❌ Error al guardar el feedback en el vector store: {e}")
         return False
 
 
@@ -342,5 +348,5 @@ def get_feedback_from_vector_store(documents_text: str):
         printer.green(f"🔍 Feedback encontrado: {feedbacks}")
         return "\n".join(feedbacks)
     except Exception as e:
-        printer.red(f"❌ Error al obtener el feedback del vector store: {e}")
+        printer.error(f"❌ Error al obtener el feedback del vector store: {e}")
         return ""

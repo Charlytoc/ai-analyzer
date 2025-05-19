@@ -1,5 +1,7 @@
 import json
 from fastapi import APIRouter, UploadFile, File, Form
+from starlette.concurrency import run_in_threadpool
+
 import shutil
 import os
 
@@ -63,7 +65,7 @@ async def update_sentence_brief_route(hash: str, payload: SentenceUpdatePayload)
             "sentence": payload.sentence,
         }
     except Exception as e:
-        printer.red(f"❌ Error al actualizar la sentencia ciudadana: {e}")
+        printer.error(f"❌ Error al actualizar la sentencia ciudadana: {e}")
         raise HTTPException(
             status_code=500,
             detail={"status": "ERROR", "message": str(e)},
@@ -87,7 +89,9 @@ async def request_changes_route(hash: str, payload: SentenceRequestChangesPayloa
                 },
             )
 
-        sentence = update_sentence_brief(hash, payload.changes)
+        printer.yellow("🔄 Actualizando sentencia ciudadana en otro hilo...")
+        sentence = await run_in_threadpool(update_sentence_brief, hash, payload.changes)
+
         upsert_feedback_in_vector_store(hash, payload.changes)
         return {
             "status": "SUCCESS",
@@ -96,7 +100,7 @@ async def request_changes_route(hash: str, payload: SentenceRequestChangesPayloa
             "sentence": sentence,
         }
     except Exception as e:
-        printer.red(f"❌ Error al solicitar cambios: {e}")
+        printer.error(f"❌ Error al solicitar cambios de una sentencia: {e}")
         raise HTTPException(
             status_code=500,
             detail={"status": "ERROR", "message": str(e)},
@@ -115,7 +119,9 @@ async def generate_sentence_brief_route(
         print("🚨 Validación de archivos", chroma_client)
         # 🚨 Validación de archivos
         if not images and not documents:
-            printer.red("❌ No se enviaron documentos ni imágenes.")
+            printer.error(
+                "Debes enviar al menos un documento o una imagen para generar la sentencia ciudadana."
+            )
             raise HTTPException(
                 status_code=400,
                 detail={
@@ -146,16 +152,19 @@ async def generate_sentence_brief_route(
                 extra_info = json.loads(extra_data)
                 printer.blue(extra_info, "Información adicional recibida")
             except json.JSONDecodeError:
-                printer.red("❌ Error al decodificar el JSON enviado en extra_data")
+                printer.error("❌ Error al decodificar el JSON enviado en extra_data")
 
-        resumen, cache_used, hash_messages = generate_sentence_brief(
-            document_paths, images_paths, extra_info
+        printer.yellow("🔄 Generando sentencia ciudadana en otro hilo...")
+        resumen, cache_used, hash_messages = await run_in_threadpool(
+            generate_sentence_brief, document_paths, images_paths, extra_info
         )
 
         if cache_used:
-            printer.green(f"✅ Sentencia ciudadana generada con caché:\n{resumen}")
+            printer.magenta("🔄 Sentencia ciudadana generada con caché")
+            printer.green(resumen)
         else:
-            printer.red(f"❌ Sentencia ciudadana generada sin caché:\n{resumen}")
+            printer.magenta("✅ Sentencia ciudadana generada sin caché")
+            printer.green(resumen)
 
         return {
             "status": "SUCCESS",
@@ -168,7 +177,7 @@ async def generate_sentence_brief_route(
             "warning": get_warning_text(),
         }
     except Exception as e:
-        printer.red(f"❌ Error al generar la sentencia ciudadana: {e}")
+        printer.error(f"❌ Error al generar la sentencia ciudadana: {e}")
         raise HTTPException(
             status_code=500,
             detail={"status": "ERROR", "message": str(e)},
