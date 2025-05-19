@@ -25,7 +25,7 @@ from server.utils.ai_interface import get_warning_text
 from server.ai.vector_store import chroma_client
 
 
-MAX_CONCURRENT_REQUESTS = 3
+MAX_CONCURRENT_REQUESTS = 5
 semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
 
 UPLOADS_PATH = "uploads"
