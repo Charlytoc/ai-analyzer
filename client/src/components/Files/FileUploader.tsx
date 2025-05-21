@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 // import { useStore } from "../../infrastructure/store";
 
 type Props = {
-  onUploadSuccess?: ({ brief }: { brief: string }) => void;
+  onUploadSuccess?: ({ brief, hash }: { brief: string; hash: string }) => void;
 };
 
 export type HashedFile = {
@@ -21,7 +21,6 @@ export const FileUploader: React.FC<Props> = ({ onUploadSuccess }) => {
   const [images, setImages] = useState<FileList | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [useCache, setUseCache] = useState(true);
-  const [systemPrompt, setSystemPrompt] = useState("");
 
   const [documents, setDocuments] = useState<FileList | null>(null);
 
@@ -49,7 +48,6 @@ export const FileUploader: React.FC<Props> = ({ onUploadSuccess }) => {
         "extra_data",
         JSON.stringify({
           use_cache: useCache,
-          system_prompt: systemPrompt,
         })
       );
       const resumen = await generateSentenceBrief(formData);
@@ -57,7 +55,8 @@ export const FileUploader: React.FC<Props> = ({ onUploadSuccess }) => {
       setIsLoading(false);
       toast.success("Resumen generado con éxito", { id: tid });
       console.log(resumen.hash, "resumen");
-      if (onUploadSuccess) onUploadSuccess({ brief: resumen.brief });
+      if (onUploadSuccess)
+        onUploadSuccess({ brief: resumen.brief, hash: resumen.hash });
     } catch (error) {
       console.error("Error al enviar datos:", error);
       toast.error("Error al generar resumen", { id: tid });
@@ -107,21 +106,6 @@ export const FileUploader: React.FC<Props> = ({ onUploadSuccess }) => {
               onChange={() => setUseCache(!useCache)}
             />
             <label htmlFor="use_cache">Usar caché</label>
-          </div>
-
-          <div className="mt-4 flex flex-col gap-2">
-            <label htmlFor="system_prompt">
-              Prompt del sistema (si no se especifica, se usará el prompt por
-              defecto)
-            </label>
-            <textarea
-              className="w-full border border-gray-300 rounded-md p-2"
-              name="system_prompt"
-              id="system_prompt"
-              rows={3}
-              value={systemPrompt}
-              onChange={(e) => setSystemPrompt(e.target.value)}
-            ></textarea>
           </div>
 
           <button

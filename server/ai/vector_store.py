@@ -1,9 +1,9 @@
 import chromadb
 import os
 import hashlib
+from server.utils.printer import Printer
 
-# import time
-# import traceback
+printer = Printer(name="vector_store")
 
 MEDIA_ROOT = os.environ.get("MEDIA_ROOT", "media")
 
@@ -11,12 +11,12 @@ VECTOR_STORAGE_PATH = os.environ.get(
     "VECTOR_STORAGE_PATH", os.path.join(MEDIA_ROOT, "vector_storage/")
 )
 
-CHROMA_PORT = os.environ.get("CHROMA_PORT", 8004)
+CHROMA_PORT = int(os.environ.get("CHROMA_PORT", 8004))
+CHROMA_HOST = os.environ.get("CHROMA_HOST", "localhost")
 
 if not os.path.exists(VECTOR_STORAGE_PATH):
     os.makedirs(VECTOR_STORAGE_PATH)
 
-# default_ef = embedding_functions.DefaultEmbeddingFunction()
 ChromaNotInitializedException = Exception("Chroma not yet initialized!")
 
 
@@ -39,7 +39,16 @@ class ChromaManager:
     client = None
 
     def __init__(self) -> None:
-        self.client = chromadb.HttpClient(host="localhost", port=CHROMA_PORT)
+        printer.yellow(
+            "🔄 Cliente de Chroma se va a conectar en HOST: ",
+            CHROMA_HOST,
+            " y en el puerto: ",
+            CHROMA_PORT,
+        )
+        self.client = chromadb.HttpClient(
+            host=CHROMA_HOST,
+            port=CHROMA_PORT,
+        )
 
     def chunkify(
         self, text: str, chunk_size: int = 1000, chunk_overlap: int = 200
@@ -56,7 +65,7 @@ class ChromaManager:
 
     def heartbeat(self) -> str:
         if self.client is None:
-            raise Exception("Chroma not yet initialized!")
+            raise ChromaNotInitializedException
         return self.client.heartbeat()
 
     def get_or_create_collection(self, collection_name: str):
@@ -127,18 +136,5 @@ class ChromaManager:
         if collection:
             collection.delete(ids=chunk_ids)
 
-
-# start_chroma_server()
-
-# chroma_client = None
-# try:
-# chroma_client = ChromaManager()
-# except Exception as e:
-# traceback.print_exc()
-# print(e, " EXCEPTION CHROMA CLIENT")
-# time.sleep(3)
-
-#     # chroma_client = ChromaManager()
-#     raise ChromaNotInitializedException
 
 chroma_client = ChromaManager()

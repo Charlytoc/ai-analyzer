@@ -13,6 +13,7 @@ from server.utils.ai_interface import (
     get_faq_questions,
     get_system_prompt,
     get_system_editor_prompt,
+    get_warning_text,
 )
 from server.utils.image_reader import ImageReader
 from server.ai.vector_store import chroma_client
@@ -117,41 +118,13 @@ def clean_markdown_block(text: str) -> str:
     return content.strip()
 
 
-def generate_sentence_brief(
-    document_paths: list[str], images_paths: list[str], extra: dict = {}
-):
-    physical_context = get_physical_context()
-
-    printer.debug("Usando Contexto Físico:")
-    printer.debug(physical_context)
-
-    use_cache = extra.get("use_cache", True)
-
-    ai_interface = AIInterface(
-        provider=os.getenv("PROVIDER", "ollama"),
-        api_key=os.getenv("PROVIDER_API_KEY", "asdasd"),
-    )
-
-    system_prompt = get_system_prompt()
-    if not system_prompt:
-        raise ValueError("No se encontró el prompt del sistema.")
-
-    printer.debug("Usando System Prompt:")
-    printer.debug(system_prompt)
-
-    if physical_context:
-        system_prompt = system_prompt.replace("{{context}}", physical_context)
-    if len(get_faq_questions()) > 0:
-        system_prompt = system_prompt.replace("{{faq}}", "\n".join(get_faq_questions()))
-
-    messages = [{"role": "system", "content": system_prompt}]
-    document_reader = DocumentReader()
-
+def read_documents(document_paths: list[str]):
     number_of_documents = len(document_paths)
     if number_of_documents > 1:
         max_characters_per_document = LIMIT_CHARACTERS_FOR_TEXT // number_of_documents
     else:
         max_characters_per_document = LIMIT_CHARACTERS_FOR_TEXT
+    document_reader = DocumentReader()
 
     text_from_all_documents = ""
     for document_path in document_paths:
@@ -192,17 +165,45 @@ def generate_sentence_brief(
             faq_results = get_faq_results(document_hash)
             text_from_all_documents += f"<faq_results for_document='{document_path}'>: {faq_results}</faq_results>"
 
+    return text_from_all_documents
+
+
+def read_images(images_paths: list[str]):
+    image_reader = ImageReader()
+    text_from_all_documents = ""
     for image_path in images_paths:
-        image_reader = ImageReader()
         image_text = image_reader.read(image_path)
         printer.yellow(f"🔍 Imagen leída: {image_path}")
         printer.yellow(f"🔍 Inicio de la imagen: {image_text[:200]}")
         text_from_all_documents += (
             f"<image_text name={image_path}>: {image_text} </image_text>"
         )
+    return text_from_all_documents
 
-    user_message_text = f"# TEXT FROM ALL SOURCES\n\n{text_from_all_documents}"
 
+def format_messages(document_paths: list[str], images_paths: list[str]):
+    physical_context = get_physical_context()
+
+    system_prompt = get_system_prompt()
+    if not system_prompt:
+        raise ValueError("No se encontró el prompt del sistema.")
+
+    if physical_context:
+        system_prompt = system_prompt.replace("{{context}}", physical_context)
+    if len(get_faq_questions()) > 0:
+        system_prompt = system_prompt.replace("{{faq}}", "\n".join(get_faq_questions()))
+
+    text_from_all_documents = read_documents(document_paths)
+    text_from_all_documents += read_images(images_paths)
+
+    user_message_text = f"# These are the sources of information to write the sentence:\n\n{text_from_all_documents}"
+
+    feedback_text = get_feedback_from_vector_store(user_message_text)
+
+    if feedback_text:
+        system_prompt += f"---FEEDBACK---\n\nYou previously received this feedback on other sentences, try to not repeat yourself and avoid the same mistakes:\n\n{feedback_text}\n\n---END_OF_FEEDBACK---\n\n"
+
+    messages = [{"role": "system", "content": system_prompt}]
     messages.append(
         {
             "role": "user",
@@ -210,30 +211,19 @@ def generate_sentence_brief(
         }
     )
 
-    messages_json = json.dumps(messages, sort_keys=True, indent=4)
-    messages_hash = hashlib.sha256(messages_json.encode("utf-8")).hexdigest()
+    return messages
 
-    feedback_text = get_feedback_from_vector_store(user_message_text)
-    if feedback_text:
-        messages.append(
-            {
-                "role": "user",
-                "content": f"# You previously received this feedback on other sentences, try to not repeat yourself and avoid the same mistakes:\n\n{feedback_text}",
-            }
-        )
-    redis_cache.set(
-        f"messages_input:{messages_hash}", messages_json, ex=EXPIRATION_TIME
+
+def generate_sentence_brief(
+    messages: list[dict],
+    sentence_hash: str,
+):
+
+    ai_interface = AIInterface(
+        provider=os.getenv("PROVIDER", "ollama"),
+        api_key=os.getenv("PROVIDER_API_KEY", "asdasd"),
     )
 
-    if use_cache:
-        cached_response = redis_cache.get(f"sentence_brief:{messages_hash}")
-        if cached_response:
-            printer.green(f"👀 Sentencia ciudadana cacheada: {messages_hash}")
-            return cached_response, True, messages_hash
-
-    printer.yellow(
-        f"🔍 No se encontró la sentencia ciudadana en cache: {messages_hash}"
-    )
     response = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
     response = clean_markdown_block(response)
     if not is_spanish(response[:150]):
@@ -244,10 +234,10 @@ def generate_sentence_brief(
         printer.green("🔍 La respuesta ya está en español en el primer intento.")
 
     response = response
-    redis_cache.set(f"sentence_brief:{messages_hash}", response, ex=EXPIRATION_TIME)
-    printer.green(f"💾 Sentencia ciudadana guardada en cache: {messages_hash}")
+    redis_cache.set(f"sentence_brief:{sentence_hash}", response, ex=EXPIRATION_TIME)
+    printer.green(f"💾 Sentencia ciudadana guardada en cache: {sentence_hash}")
 
-    return response, False, messages_hash
+    return response
 
 
 def update_system_prompt(previous_messages: list[dict], new_system_prompt: str):
@@ -272,7 +262,7 @@ def update_sentence_brief(hash: str, changes: str):
     previous_messages.append(
         {
             "role": "user",
-            "content": f"Por favor realiza cambios en la sentencia ciudadana, no estoy conforme con el resultado. Debes retornar únicamente el texto en Español con los cambios realizados. Los cambios que debes realizar son: {changes}",
+            "content": f"Por favor realiza únicamente los cambios que se te indican a continuación. Debes retornar únicamente el texto correspondiente a la sentencia ciudadana con los cambios realizados. Los cambios que debes realizar son: {changes}",
         }
     )
     if not sentence:
@@ -287,7 +277,7 @@ def update_sentence_brief(hash: str, changes: str):
         model=os.getenv("MODEL", "gemma3"),
     )
     response = clean_markdown_block(response)
-
+    redis_cache.set(f"sentence_brief:{hash}", response, ex=EXPIRATION_TIME)
     return response
 
 
@@ -350,3 +340,18 @@ def get_feedback_from_vector_store(documents_text: str):
     except Exception as e:
         printer.error(f"❌ Error al obtener el feedback del vector store: {e}")
         return ""
+
+
+def format_response(
+    response: str, cached: bool, hash: str, n_documents: int, n_images: int
+):
+    return {
+        "status": "SUCCESS",
+        "message": "Sentencia ciudadana generada con éxito.",
+        "brief": response,
+        "n_documents": n_documents,
+        "n_images": n_images,
+        "cache_used": cached,
+        "hash": hash,
+        "warning": get_warning_text(),
+    }

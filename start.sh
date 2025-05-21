@@ -113,6 +113,9 @@ else
     echo "⚠️ Servidor de Chroma NO será iniciado (CHROMA=false)."
 fi
 
+echo "🚀 Iniciando worker de Celery..."
+celery -A server.tasks worker --loglevel=info --concurrency=5 &
+
 export ENVIRONMENT=$MODE
 
 echo "🚀 Iniciando la aplicación FastAPI..."
