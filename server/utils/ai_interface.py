@@ -1,6 +1,8 @@
 import os
 import shutil
 import subprocess
+from functools import lru_cache
+
 import requests
 from ollama import Client
 from .printer import Printer
@@ -14,6 +16,7 @@ SYSTEM_PROMPT_FILE_PATH = os.path.join(CONTEXT_DIR, "SYSTEM.txt")
 SYSTEM_EDITOR_PROMPT_FILE_PATH = os.path.join(CONTEXT_DIR, "SYSTEM_EDITOR.txt")
 
 
+@lru_cache()
 def get_faq_questions() -> list[str]:
     """
     Lee las preguntas frecuentes desde el archivo.
@@ -26,6 +29,7 @@ def get_faq_questions() -> list[str]:
         return [line.strip() for line in f if line.strip()]
 
 
+@lru_cache()
 def get_system_prompt() -> str:
     """
     Lee el prompt del sistema desde el archivo.
@@ -42,6 +46,7 @@ def get_system_prompt() -> str:
         return f.read()
 
 
+@lru_cache()
 def get_system_editor_prompt() -> str:
     """
     Lee el prompt del sistema desde el archivo.
@@ -56,6 +61,7 @@ def get_system_editor_prompt() -> str:
         return f.read()
 
 
+@lru_cache()
 def get_physical_context() -> str:
     context_files = os.listdir("server/ai/context")
     valid_extensions = (".md", ".txt", ".csv")
@@ -82,6 +88,7 @@ Este resumen fue generado automáticamente por inteligencia artificial para faci
 """
 
 
+@lru_cache()
 def get_warning_text():
     warning_text = os.getenv("WARNING_TEXT", DEFAULT_WARNING_TEXT)
     if not warning_text:

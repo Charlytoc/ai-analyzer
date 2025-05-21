@@ -61,7 +61,6 @@ def get_faq_results(doc_hash: str):
     results_str = ""
 
     questions = get_faq_questions()
-    # printer.green(f"Preguntas para extraer información del documento: {questions}")
 
     documents = set()
     for question in questions:

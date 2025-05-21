@@ -1,4 +1,3 @@
-# server/tasks.py
 from server.celery_app import celery
 from server.utils.printer import Printer
 from server.utils.processor import (
@@ -10,7 +9,6 @@ from server.utils.processor import (
 printer = Printer(name="tasks")
 
 
-# Tarea simulada de procesamiento pesado (ej. resumen de sentencia)
 @celery.task(name="generate_sentence_brief")
 def generate_brief_task(
     messages: list, messages_hash: str, n_documents: int, n_images: int
