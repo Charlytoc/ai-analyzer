@@ -16,7 +16,7 @@ from server.utils.ai_interface import (
     get_warning_text,
 )
 from server.utils.image_reader import ImageReader
-from server.ai.vector_store import chroma_client
+from server.ai.vector_store import get_chroma_client
 from server.utils.detectors import is_spanish
 
 EXPIRATION_TIME = 60 * 60 * 24 * 30
@@ -58,6 +58,7 @@ def remove_duplicates(lst):
 
 
 def get_faq_results(doc_hash: str):
+    chroma_client = get_chroma_client()
     results_str = ""
 
     questions = get_faq_questions()
@@ -118,6 +119,7 @@ def clean_markdown_block(text: str) -> str:
 
 
 def read_documents(document_paths: list[str]):
+    chroma_client = get_chroma_client()
     number_of_documents = len(document_paths)
     if number_of_documents > 1:
         max_characters_per_document = LIMIT_CHARACTERS_FOR_TEXT // number_of_documents
@@ -296,6 +298,7 @@ def get_user_message_partial_text(messages: list[dict]):
 
 
 def upsert_feedback_in_vector_store(hash: str, feedback: str):
+    chroma_client = get_chroma_client()
     try:
         previous_messages = redis_cache.get(f"messages_input:{hash}")
         previous_messages = json.loads(previous_messages)
@@ -320,6 +323,7 @@ def upsert_feedback_in_vector_store(hash: str, feedback: str):
 
 
 def get_feedback_from_vector_store(documents_text: str):
+    chroma_client = get_chroma_client()
     trimmed_text = documents_text[:N_CHARACTERS_FOR_FEEDBACK_VECTORIZATION]
     try:
         printer.blue("🔍 Buscando feedback en vector store...")

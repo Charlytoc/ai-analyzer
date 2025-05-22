@@ -137,4 +137,7 @@ class ChromaManager:
             collection.delete(ids=chunk_ids)
 
 
-chroma_client = ChromaManager()
+def get_chroma_client():
+    if not hasattr(get_chroma_client, "_client"):
+        get_chroma_client._client = ChromaManager()
+    return get_chroma_client._client

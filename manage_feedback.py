@@ -1,7 +1,8 @@
 from server.utils.printer import Printer
-from server.ai.vector_store import chroma_client
+from server.ai.vector_store import get_chroma_client
 
 printer = Printer("FEEDBACK_MANAGER")
+chroma_client = get_chroma_client()
 
 collection_name = "sentence_feedbacks"
 collection = chroma_client.get_or_create_collection(collection_name)
