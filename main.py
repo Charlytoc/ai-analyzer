@@ -131,7 +131,12 @@ async def auth_and_cors(request: Request, call_next):
             )
     else:
         printer.yellow("No se validó el token")
-    printer.green("Una solicitud fue permitida con éxito")
+    printer.green(
+        "Una solicitud fue permitida con éxito a las ",
+        datetime.now(),
+        "desde la IP: ",
+        client_ip,
+    )
     return await call_next(request)
 
 
