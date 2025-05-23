@@ -36,9 +36,11 @@ async def lifespan(app: FastAPI):
         ai = AIInterface(
             provider=os.getenv("PROVIDER", "ollama"),
             api_key=os.getenv("PROVIDER_API_KEY", "asdasd"),
+            base_url=os.getenv("PROVIDER_BASE_URL", None),
         )
         # check the model to use
         model = os.getenv("MODEL", "gemma3:1b")
+        printer.green("🔍 Verificando modelo: ", model)
         ai.check_model(model)
     else:
         printer.error("🔴 Ollama no está instalado, por favor instálalo primero")

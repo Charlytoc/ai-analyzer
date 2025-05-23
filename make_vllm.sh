@@ -16,10 +16,4 @@ pip install --upgrade pip
 pip install vllm
 pip install git+https://github.com/huggingface/transformers.git
 
-# Lanza el servidor vLLM
-vllm serve --model $MODEL_NAME \
-  --host $HOST \
-  --port $PORT \
-  --dtype bfloat16 \
-  --max-model-len 15000 \
-  --max-num-seqs 3
+vllm serve google/gemma-3-12b-it --host 0.0.0.0 --port 8009 --dtype bfloat16 --max-model-len 15000 --max-num-seqs 3
