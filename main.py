@@ -9,10 +9,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from server.utils.ai_interface import check_ollama_installation
+from server.ai.ai_interface import check_ollama_installation, AIInterface
 from server.utils.printer import Printer
 from server.routes import router
-from server.utils.ai_interface import AIInterface
 
 printer = Printer("MAIN")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "prod").lower().strip()
@@ -30,13 +29,14 @@ async def lifespan(app: FastAPI):
     result = check_ollama_installation()
     printer.error("Iniciando aplicación, hora: ", datetime.now())
     if result["installed"]:
+        printer.green("🟢 Ollama está instalado")
+        printer.green("Ollama version: ", result["version"])
+        printer.green("Ollama server running: ", result["server_running"])
+
         ai = AIInterface(
             provider=os.getenv("PROVIDER", "ollama"),
             api_key=os.getenv("PROVIDER_API_KEY", "asdasd"),
         )
-        printer.green("🟢 Ollama está instalado")
-        printer.green("Ollama version: ", result["version"])
-        printer.green("Ollama server running: ", result["server_running"])
         # check the model to use
         model = os.getenv("MODEL", "gemma3:1b")
         ai.check_model(model)
@@ -131,12 +131,7 @@ async def auth_and_cors(request: Request, call_next):
             )
     else:
         printer.yellow("No se validó el token")
-    printer.green(
-        "Una solicitud fue permitida con éxito a las ",
-        datetime.now(),
-        "desde la IP: ",
-        client_ip,
-    )
+    printer.green("Una solicitud fue permitida con éxito a las ", datetime.now())
     return await call_next(request)
 
 

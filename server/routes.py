@@ -21,7 +21,7 @@ from server.utils.processor import (
     format_response,
     generate_sentence_brief,
 )
-from server.utils.ai_interface import get_warning_text
+from server.ai.ai_interface import get_warning_text
 
 from server.tasks import generate_brief_task, update_brief_task
 

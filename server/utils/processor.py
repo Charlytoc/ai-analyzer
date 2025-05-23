@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 from server.utils.pdf_reader import DocumentReader
 from server.utils.printer import Printer
 from server.utils.redis_cache import RedisCache
-from server.utils.ai_interface import (
+from server.ai.ai_interface import (
     AIInterface,
     get_physical_context,
     get_faq_questions,
@@ -89,6 +89,7 @@ def translate_to_spanish(text: str):
     ai_interface = AIInterface(
         provider=os.getenv("PROVIDER", "ollama"),
         api_key=os.getenv("PROVIDER_API_KEY", "asdasd"),
+        base_url=os.getenv("PROVIDER_BASE_URL", None),
     )
     response = ai_interface.chat(
         messages=[
@@ -223,6 +224,7 @@ def generate_sentence_brief(
     ai_interface = AIInterface(
         provider=os.getenv("PROVIDER", "ollama"),
         api_key=os.getenv("PROVIDER_API_KEY", "asdasd"),
+        base_url=os.getenv("PROVIDER_BASE_URL", None),
     )
 
     response = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
@@ -272,6 +274,7 @@ def update_sentence_brief(hash: str, changes: str):
     ai_interface = AIInterface(
         provider=os.getenv("PROVIDER", "ollama"),
         api_key=os.getenv("PROVIDER_API_KEY", "asdasd"),
+        base_url=os.getenv("PROVIDER_BASE_URL", None),
     )
     response = ai_interface.chat(
         messages=previous_messages,

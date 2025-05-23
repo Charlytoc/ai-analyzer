@@ -1,8 +1,8 @@
 # test_cache.py
 import pytest
 from functools import lru_cache
-from server.utils import ai_interface
-from server.utils.ai_interface import get_faq_questions, get_system_prompt
+from server.ai import ai_interface
+from server.ai.ai_interface import get_faq_questions, get_system_prompt
 
 @pytest.fixture(autouse=True)
 def clear_caches():
