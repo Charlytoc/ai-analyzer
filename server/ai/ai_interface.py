@@ -190,6 +190,7 @@ class OpenAIProvider:
         stream: bool = False,
         tools: list[dict] | list[callable] = [],
     ):
+        printer.blue(f"Generando respuesta con el modelo: {model}")
         response = self.client.chat.completions.create(
             model=model,
             messages=messages,
