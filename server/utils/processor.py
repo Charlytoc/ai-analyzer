@@ -206,7 +206,16 @@ def format_messages(document_paths: list[str], images_paths: list[str]):
         system_prompt += f"---FEEDBACK---\n\nYou previously received this feedback on other sentences, try to not repeat yourself and avoid the same mistakes:\n\n{feedback_text}\n\n---END_OF_FEEDBACK---\n\n"
 
     messages = [{"role": "system", "content": system_prompt}]
+    # messages = []
     messages.append(
+        # {
+        #     "role": "user",
+        #     "content": "<SYSTEM>\n\n"
+        #     + system_prompt
+        #     + "\n\n</SYSTEM>\n\n<USER>\n\n"
+        #     + user_message_text
+        #     + "\n\n</USER>",
+        # }
         {
             "role": "user",
             "content": user_message_text,
@@ -253,6 +262,13 @@ def update_system_prompt(previous_messages: list[dict], new_system_prompt: str):
     return previous_messages
 
 
+def append_to_user_message(previous_messages: list[dict], new_user_message: str):
+    for message in previous_messages:
+        if message["role"] == "user":
+            message["content"] = message["content"] + "\n\n" + new_user_message
+    return previous_messages
+
+
 def update_sentence_brief(hash: str, changes: str):
     sentence = redis_cache.get(f"sentence_brief:{hash}")
     previous_messages = redis_cache.get(f"messages_input:{hash}")
@@ -262,11 +278,9 @@ def update_sentence_brief(hash: str, changes: str):
         previous_messages,
         system_editor_prompt.replace("{{sentencia}}", sentence),
     )
-    previous_messages.append(
-        {
-            "role": "user",
-            "content": f"Por favor realiza únicamente los cambios que se te indican a continuación. Debes retornar únicamente el texto correspondiente a la sentencia ciudadana con los cambios realizados. Los cambios que debes realizar son: {changes}",
-        }
+    previous_messages = append_to_user_message(
+        previous_messages,
+        f"-----\nPor favor realiza únicamente los cambios que se te indican a continuación. Debes retornar únicamente el texto correspondiente a la sentencia ciudadana con los cambios realizados. Los cambios que debes realizar son: {changes}",
     )
     if not sentence:
         raise ValueError("No se encontró la sentencia ciudadana.")

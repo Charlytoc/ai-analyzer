@@ -26,8 +26,17 @@ os.makedirs("uploads/documents/read", exist_ok=True)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     printer.yellow("🔍 Verificando instalación de Ollama")
-    # result = check_ollama_installation()
-    printer.error("Iniciando aplicación, hora: ", datetime.now())
+    provider = os.getenv("PROVIDER", "ollama")
+    if provider == "ollama":
+        result = check_ollama_installation()
+        if not result["installed"]:
+            printer.error("🔴 Ollama no está instalado, por favor instálalo primero")
+            raise Exception("Ollama no está instalado")
+
+        printer.green("🟢 Ollama está instalado")
+        printer.green("Ollama version: ", result["version"])
+        printer.green("Ollama server running: ", result["server_running"])
+
     ai = AIInterface(
         provider=os.getenv("PROVIDER", "ollama"),
         api_key=os.getenv("PROVIDER_API_KEY", "asdasd"),
@@ -37,13 +46,7 @@ async def lifespan(app: FastAPI):
     model = os.getenv("MODEL", "gemma3:1b")
     printer.green("🔍 Verificando modelo: ", model)
     ai.check_model(model)
-    # if result["installed"]:
-        # printer.green("🟢 Ollama está instalado")
-        # printer.green("Ollama version: ", result["version"])
-        # printer.green("Ollama server running: ", result["server_running"])
-
-    # else:
-    #     printer.error("🔴 Ollama no está instalado, por favor instálalo primero")
+    printer.green("Iniciando aplicación, hora: ", datetime.now())
 
     yield
 

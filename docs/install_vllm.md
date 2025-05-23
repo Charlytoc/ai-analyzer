@@ -42,3 +42,17 @@ curl http://localhost:8009/v1/chat/completions \
   }'
 
 ```
+
+5. Agregar la URL del servidor vLLM a la variable de entorno `PROVIDER_BASE_URL` en el archivo `.env`
+
+Nota: Si el servidor vLLM está corriendo en un servidor remoto, puedes usar la URL del servidor remoto, solo asegúrate de colocar: **HOST:PORT/v1** (debe terminar en /v1 sin slash al final
+
+Por ejemplo, si el servidor vLLM está corriendo en `http://192.168.1.100:8009`, debes agregar: `PROVIDER_BASE_URL=http://192.168.1.100:8009/v1`
+
+6. Reiniciar el servidor
+
+Detener el proceso del servidor del intérprete y ejecutar:
+
+```bash
+./start.sh
+```
