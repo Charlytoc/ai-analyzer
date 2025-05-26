@@ -3,6 +3,7 @@
 VENV_DIR="venv"
 MODE=""
 CHROMA="true"  # Por defecto true
+CELERY="true"  # Por defecto true
 
 # Parsear argumentos con validación de valor
 while [[ "$#" -gt 0 ]]; do
@@ -18,10 +19,21 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         -c|--chroma)
             if [[ -n "$2" && "$2" != -* ]]; then
-                CHROMA="$2"
-                # Normalizar a minúsculas para evitar problemas
-                CHROMA=$(echo "$CHROMA" | tr '[:upper:]' '[:lower:]')
+                CHROMA=$(echo "$2" | tr '[:upper:]' '[:lower:]')
                 if [[ "$CHROMA" != "true" && "$CHROMA" != "false" ]]; then
+                    echo "❌ Valor inválido para $1: debe ser 'true' o 'false'"
+                    exit 1
+                fi
+                shift
+            else
+                echo "❌ Se esperaba un valor para $1 (true o false)"
+                exit 1
+            fi
+            ;;
+        --celery)
+            if [[ -n "$2" && "$2" != -* ]]; then
+                CELERY=$(echo "$2" | tr '[:upper:]' '[:lower:]')
+                if [[ "$CELERY" != "true" && "$CELERY" != "false" ]]; then
                     echo "❌ Valor inválido para $1: debe ser 'true' o 'false'"
                     exit 1
                 fi
@@ -75,14 +87,12 @@ echo "📦 Instalando dependencias desde requirements.txt..."
 pip install -r requirements.txt -q
 echo "✅ Dependencias instaladas."
 
-# Solo en modo desarrollo corre React
 if [ "$MODE" == "dev" ]; then
     echo "📦 Instalando dependencias del cliente en modo desarrollo..."
     pushd client
     npm install
     echo "🚀 Iniciando cliente en modo desarrollo..."
 
-    # Igual tiene que hacer un build
     npm run build
     echo "✅ Cliente en modo desarrollo instalado y listo para usar."
     npm run dev &
@@ -91,18 +101,23 @@ else
     echo "🏗️ Modo producción: NO se iniciará cliente React."
 fi
 
-echo "🚀 Verificando estado de Redis en Docker..."
-if [ "$(docker ps -aq -f name=document_redis)" ]; then
-    if [ "$(docker ps -q -f name=document_redis)" ]; then
+echo "🚀 Verificando estado de Redis (contenedor: redis_server_sentencias)..."
+if [ "$(docker ps -aq -f name=redis_server_sentencias)" ]; then
+    if [ "$(docker ps -q -f name=redis_server_sentencias)" ]; then
         echo "✅ Redis ya está corriendo."
     else
         echo "🔄 Redis existe pero está detenido. Iniciando..."
-        docker start document_redis
+        docker start redis_server_sentencias
     fi
 else
-    echo "📦 Redis no existe. Creando contenedor..."
-    docker run -d --name document_redis -p 6380:6379 redis
+    echo "📦 Redis no existe. Creando contenedor con configuración segura..."
+    docker run -d \
+        --name redis_server_sentencias \
+        -p 6380:6379 \
+        redis \
+        redis-server --bind 0.0.0.0 --protected-mode no
 fi
+
 
 if [ "$CHROMA" == "true" ]; then
     echo "🚀 Iniciando servidor de Chroma..."
@@ -113,8 +128,12 @@ else
     echo "⚠️ Servidor de Chroma NO será iniciado (CHROMA=false)."
 fi
 
-echo "🚀 Iniciando worker de Celery..."
-celery -A server.tasks worker --loglevel=info --concurrency=5 &
+if [ "$CELERY" == "true" ]; then
+    echo "🚀 Iniciando worker de Celery..."
+    celery -A server.celery_app worker --loglevel=info --concurrency=5 &
+else
+    echo "⚠️ Worker de Celery NO será iniciado (CELERY=false)."
+fi
 
 export ENVIRONMENT=$MODE
 
