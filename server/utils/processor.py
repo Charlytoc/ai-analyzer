@@ -265,7 +265,7 @@ def update_system_prompt(previous_messages: list[dict], new_system_prompt: str):
 def append_to_user_message(previous_messages: list[dict], new_user_message: str):
     for message in previous_messages:
         if message["role"] == "user":
-            message["content"] = message["content"] + "\n\n" + new_user_message
+            message["content"] = new_user_message
     return previous_messages
 
 
