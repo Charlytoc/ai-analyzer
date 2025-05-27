@@ -3,7 +3,6 @@
 VENV_DIR="venv"
 MODE=""
 CHROMA="true"  # Por defecto true
-CELERY="true"  # Por defecto true
 
 # Parsear argumentos con validación de valor
 while [[ "$#" -gt 0 ]]; do
@@ -21,19 +20,6 @@ while [[ "$#" -gt 0 ]]; do
             if [[ -n "$2" && "$2" != -* ]]; then
                 CHROMA=$(echo "$2" | tr '[:upper:]' '[:lower:]')
                 if [[ "$CHROMA" != "true" && "$CHROMA" != "false" ]]; then
-                    echo "❌ Valor inválido para $1: debe ser 'true' o 'false'"
-                    exit 1
-                fi
-                shift
-            else
-                echo "❌ Se esperaba un valor para $1 (true o false)"
-                exit 1
-            fi
-            ;;
-        --celery)
-            if [[ -n "$2" && "$2" != -* ]]; then
-                CELERY=$(echo "$2" | tr '[:upper:]' '[:lower:]')
-                if [[ "$CELERY" != "true" && "$CELERY" != "false" ]]; then
                     echo "❌ Valor inválido para $1: debe ser 'true' o 'false'"
                     exit 1
                 fi
@@ -118,21 +104,25 @@ else
         redis-server --bind 0.0.0.0 --protected-mode no
 fi
 
-
 if [ "$CHROMA" == "true" ]; then
-    echo "🚀 Iniciando servidor de Chroma..."
-    chroma run --path media/vector_storage/ --port 8004 &
-    echo "🚀 Esperando a que el servidor de Chroma esté listo..."
-    sleep 5
+    echo "🚀 Iniciando servidor de Chroma en contenedor Docker..."
+    if [ "$(docker ps -aq -f name=chroma_server)" ]; then
+        if [ "$(docker ps -q -f name=chroma_server)" ]; then
+            echo "✅ Chroma ya está corriendo."
+        else
+            echo "🔄 Chroma existe pero está detenido. Iniciando..."
+            docker start chroma_server
+        fi
+    else
+        echo "📦 Chroma no existe. Creando contenedor nuevo..."
+        docker run -d \
+            --name chroma_server \
+            -v "$(pwd)/chroma-data:/data" \
+            -p 8004:8000 \
+            chromadb/chroma
+    fi
 else
     echo "⚠️ Servidor de Chroma NO será iniciado (CHROMA=false)."
-fi
-
-if [ "$CELERY" == "true" ]; then
-    echo "🚀 Iniciando worker de Celery..."
-    celery -A server.celery_app worker --loglevel=info --concurrency=5 &
-else
-    echo "⚠️ Worker de Celery NO será iniciado (CELERY=false)."
 fi
 
 export ENVIRONMENT=$MODE
