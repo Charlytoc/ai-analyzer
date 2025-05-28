@@ -1,16 +1,16 @@
-¿Qué tribunal dictó la sentencia?  
+¿Qué Juzgado, Tribunal o Sala dictó la sentencia?  
+¿Se trata de una Resolución de Sala Colegiada, Sala Unitaria o de Tribunal de Alzada?  
 ¿En qué lugar y fecha se dictó la sentencia?  
-¿Cuál es el número de expediente?  
+¿Cuál es el número de expediente, causa o toca?  
 ¿Qué tipo de procedimiento se resuelve? (Teniendo en cuenta que procedimiento = controversia = juicio = proceso = litigio)  
 ¿Se trata de una sentencia definitiva o interlocutoria? (Sentencia definitiva: decide el fondo del litigio en lo principal; sentencia interlocutoria: decide un incidente o alguna cuestión procesal)  
 ¿Quiénes son las partes en el procedimiento? (Civil, familiar, mercantil o laboral: actor y demandado; penal: víctima e imputado)  
 ¿El procedimiento se promovió por propio derecho o por un representante/apoderado legal? (Si es por propio derecho, el actor es el titular del derecho; si se promueve en carácter de representante legal o apoderado, el actor sigue siendo el titular del derecho litigioso)  
-¿Cuál es la acción intentada?  
-¿Cuál es el motivo de la controversia?  
-¿Cuáles son las prestaciones reclamadas?  
-¿Cuáles son los hechos relevantes del caso?  
-¿Cuál es la cuestión jurídica a resolver en la sentencia?  
-¿Con cuáles pruebas tuvo el tribunal por acreditados los hechos narrados por las partes?  
-¿Cuál fue la decisión del tribunal?  
-¿Cuáles son los puntos resolutivos?  
-¿Se trata de una copia certificada o autorizada de la sentencia?
+¿Cuál es la acción y/o pretensión solicitada?  
+¿Cuál es el motivo de la controversia, litigio o denuncia?  
+¿Cuáles son las prestaciones o derechos reclamados?  
+¿Cuáles son los hechos relevantes en el juicio?  
+¿Cuál es el asunto, o pretensión jurídica a resolver en la sentencia?  
+¿Con qué pruebas acreditó el Juzgado, Sala o Tribunal los hechos argumentados por las partes?  
+¿Cuál fue la decisión del Juzgado, Sala o Tribunal?  
+¿Cuáles son los puntos resolutivos (narrarlos, no listarlos)?

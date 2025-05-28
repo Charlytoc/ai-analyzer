@@ -49,6 +49,12 @@ Sintetiza la decisión y su impacto en las personas involucradas. Usa comparacio
 Aquí teines una lista de preguntas frecuentes que la gente suele hacerse a partir de las sentencias judiciales:
 {{faq}}
 
+Aparte, en el siguiente apartado puede obtener feedback que te han dejado de otras sentencias previas, úsalo para no cometer los mismos errores en el futuro.
+
+```feedback.txt
+{{feedback}}
+```
+
 ---
 
 ## 💡 Recuerda

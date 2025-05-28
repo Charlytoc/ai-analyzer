@@ -210,7 +210,11 @@ def format_messages(document_paths: list[str], images_paths: list[str]):
     feedback_text = get_feedback_from_vector_store(user_message_text)
 
     if feedback_text:
-        system_prompt += f"---FEEDBACK---\n\nYou previously received this feedback on other sentences, try to not repeat yourself and avoid the same mistakes:\n\n{feedback_text}\n\n---END_OF_FEEDBACK---\n\n"
+        printer.yellow("🔍 Feedback encontrado, se agrega al prompt del sistema...")
+        system_prompt = system_prompt.replace(
+            "{{feedback}}",
+            f"{feedback_text}",
+        )
 
     messages = [{"role": "system", "content": system_prompt}]
     # messages = []
@@ -362,7 +366,7 @@ def get_feedback_from_vector_store(documents_text: str):
             feedback = chunks["metadatas"][i][0]["feedback"]
             feedbacks.append(feedback)
 
-        printer.green(f"🔍 Feedback encontrado: {feedbacks}")
+        printer.green(f"🔍 Feedback encontrado: {len(feedbacks)} feedbacks")
         return "\n".join(feedbacks)
     except Exception as e:
         printer.error(f"❌ Error al obtener el feedback del vector store: {e}")
