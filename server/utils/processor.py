@@ -191,14 +191,14 @@ def read_images(images_paths: list[str]):
 
 
 def format_messages(document_paths: list[str], images_paths: list[str]):
-    physical_context = get_physical_context()
+    # physical_context = get_physical_context()
 
     system_prompt = get_system_prompt()
     if not system_prompt:
         raise ValueError("No se encontró el prompt del sistema.")
 
-    if physical_context:
-        system_prompt = system_prompt.replace("{{context}}", physical_context)
+    # if physical_context:
+    #     system_prompt = system_prompt.replace("{{context}}", physical_context)
     if len(get_faq_questions()) > 0:
         system_prompt = system_prompt.replace("{{faq}}", "\n".join(get_faq_questions()))
 
