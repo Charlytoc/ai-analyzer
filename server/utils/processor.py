@@ -20,7 +20,7 @@ from server.ai.vector_store import get_chroma_client
 from server.utils.detectors import is_spanish
 
 EXPIRATION_TIME = 60 * 60 * 24 * 30
-LIMIT_CHARACTERS_FOR_TEXT = int(os.getenv("LIMIT_CHARACTERS_FOR_ANALYSIS", 40000))
+LIMIT_CHARACTERS_FOR_TEXT = int(os.getenv("LIMIT_CHARACTERS_FOR_ANALYSIS", 35000))
 
 N_CHARACTERS_FOR_FEEDBACK_VECTORIZATION = 3000
 
@@ -79,6 +79,10 @@ def get_faq_results(doc_hash: str):
     )
     documents = remove_duplicates(documents)
     results_str += f"Resultados de la búsqueda: {' '.join(documents)}"
+    try:
+        chroma_client.delete_collection(f"doc_{doc_hash}")
+    except Exception as e:
+        printer.error(f"❌ Error al eliminar la colección en vector store: {e}")
     return results_str
 
 
@@ -155,6 +159,9 @@ def read_documents(document_paths: list[str]):
             text_from_all_documents += f"<document_text name='{document_path}'>: \n{truncated}\n </document_text>"
             created = chroma_client.get_collection_or_none(f"doc_{document_hash}")
             if not created:
+                printer.blue(
+                    "🔍 Creando colección en vector store para el documento..."
+                )
                 chroma_client.get_or_create_collection(f"doc_{document_hash}")
                 chunks = chroma_client.chunkify(
                     document_text, chunk_size=1000, chunk_overlap=200
