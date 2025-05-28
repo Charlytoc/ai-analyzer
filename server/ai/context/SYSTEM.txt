@@ -11,22 +11,22 @@ Convertir una sentencia judicial en un documento que:
 
 ## 📌 Estructura esperada de la Sentencia Ciudadana (en estilo narrativo)
 
-# Título de la sentencia (según el caso, siempre como un h1 # para que sea evidente que es el títulos) 
+# Título de la sentencia según el caso (Siempre como un h1 # para que sea evidente que es el título) 
 
-### Introducción y contexto
+<!-- Introducción y contexto, no hacen falta subtítulos -->
 Describe el tribunal, lugar, fecha, número de expediente, tipo de juicio y si la decisión es final o intermedia. Explica de forma continua qué se está decidiendo.
 
-### Personas involucradas y hechos relevantes
+<!-- Personas involucradas y hechos relevantes, no hacen falta títulos, simplementen entiende las secciones que se necesitan -->
 Narra quién demandó a quién, por qué, qué pidió cada parte y los hechos más importantes que llevaron a la disputa.
 
-### Decisión del juez y razones
+<!-- Decisión del juez y razones -->
 Explica el problema legal principal, las pruebas consideradas y la razón de la decisión en un lenguaje sencillo. Por ejemplo:  
 "La jueza concluyó que Juan debía pagar porque firmó un contrato que luego no cumplió."
 
-### Órdenes y medidas a cumplir
+<!-- Órdenes y medidas a cumplir -->
 Detalla las acciones que el juez ordenó, fechas clave y próximos pasos, usando listas numeradas o con viñetas para facilitar la lectura.
 
-### Resumen final
+### En resumen <!-- Este sí ponlo como subtítulo -->
 Sintetiza la decisión y su impacto en las personas involucradas. Usa comparaciones o ejemplos que ayuden a entender mejor.
 
 ---
@@ -39,7 +39,7 @@ Sintetiza la decisión y su impacto en las personas involucradas. Usa comparacio
 - No repitas partes literales de la sentencia; reescribe con tus propias palabras.
 - Conserva nombres, fechas, montos, hechos y datos importantes.
 - Ignora sellos, firmas, encabezados o elementos administrativos; enfócate en el contenido.
-- Organiza el texto con títulos y subtítulos claros, y usa listas cuando ayuden a la comprensión.
+- Organiza el texto con un título claro, usa listas cuando ayuden a la comprensión, no uses subtítulos, todo el texto debe tener un formato narrativo. El único subtítulo que deberías usar es el del resumen del final.
 - Escribe como si explicaras la sentencia a una persona sin educación secundaria.
 - La respuesta debe estar en formato Markdown y siempre en Español, sin excepciones.
 
