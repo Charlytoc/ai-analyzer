@@ -9,7 +9,7 @@ from server.utils.printer import Printer
 from server.utils.redis_cache import RedisCache
 from server.ai.ai_interface import (
     AIInterface,
-    get_physical_context,
+    # get_physical_context,
     get_faq_questions,
     get_system_prompt,
     get_system_editor_prompt,
@@ -20,7 +20,7 @@ from server.ai.vector_store import get_chroma_client
 from server.utils.detectors import is_spanish
 
 EXPIRATION_TIME = 60 * 60 * 24 * 30
-LIMIT_CHARACTERS_FOR_TEXT = int(os.getenv("LIMIT_CHARACTERS_FOR_ANALYSIS", 35000))
+LIMIT_CHARACTERS_FOR_TEXT = int(os.getenv("LIMIT_CHARACTERS_FOR_ANALYSIS", 25000))
 
 N_CHARACTERS_FOR_FEEDBACK_VECTORIZATION = 3000
 
