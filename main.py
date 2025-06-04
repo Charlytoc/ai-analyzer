@@ -13,6 +13,7 @@ from server.ai.ai_interface import check_ollama_installation, AIInterface
 from server.utils.printer import Printer
 from server.routes import router
 
+
 printer = Printer("MAIN")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "prod").lower().strip()
 

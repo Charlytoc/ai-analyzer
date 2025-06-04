@@ -17,7 +17,8 @@ s1.pdf
 s2.pdf
 s3.pdf
 
-
+requests_log.csv
+tasks_log.csv
 error.log
 
 s1.md

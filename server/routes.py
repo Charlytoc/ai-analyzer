@@ -22,9 +22,10 @@ from server.utils.processor import (
     generate_sentence_brief,
 )
 from server.ai.ai_interface import get_warning_text
-
+from server.utils.csv_logger import CSVLogger
 from server.tasks import generate_brief_task, update_brief_task
 
+csv_logger = CSVLogger()
 
 UPLOADS_PATH = "uploads"
 os.makedirs(f"{UPLOADS_PATH}/images", exist_ok=True)
@@ -42,6 +43,13 @@ async def get_sentence_brief_route(hash: str):
     sentencia = redis_cache.get(f"sentence_brief:{hash}")
 
     if not sentencia:
+        csv_logger.log(
+            "GET /sentencia/{hash}",
+            404,
+            hash,
+            "No se encontró la sentencia ciudadana.",
+            exit_status=1,
+        )
         raise HTTPException(
             status_code=404,
             detail={
@@ -50,6 +58,13 @@ async def get_sentence_brief_route(hash: str):
             },
         )
 
+    csv_logger.log(
+        "GET /sentencia/{hash}",
+        200,
+        hash,
+        "Sentencia ciudadana encontrada en caché.",
+        exit_status=0,
+    )
     return JSONResponse(
         content={
             "status": "SUCCESS",
@@ -71,6 +86,13 @@ async def update_sentence_brief_route(hash: str, payload: SentenceUpdatePayload)
     try:
         redis_cache.set(f"sentence_brief:{hash}", payload.sentence)
 
+        csv_logger.log(
+            "PUT /sentencia/{hash}",
+            200,
+            hash,
+            "Sentencia ciudadana actualizada con éxito.",
+            exit_status=0,
+        )
         return {
             "status": "SUCCESS",
             "message": "Sentencia ciudadana actualizada con éxito.",
@@ -78,6 +100,13 @@ async def update_sentence_brief_route(hash: str, payload: SentenceUpdatePayload)
         }
     except Exception as e:
         printer.error(f"❌ Error al actualizar la sentencia ciudadana: {e}")
+        csv_logger.log(
+            "PUT /sentencia/{hash}",
+            500,
+            hash,
+            f"Error al actualizar la sentencia ciudadana: {e}",
+            exit_status=1,
+        )
         raise HTTPException(
             status_code=500,
             detail={"status": "ERROR", "message": str(e)},
@@ -108,18 +137,31 @@ async def request_changes_route(hash: str, payload: SentenceRequestChangesPayloa
 
         upsert_feedback_in_vector_store(hash, payload.changes)
 
+        csv_logger.log(
+            "POST /sentencia/{hash}/request-changes",
+            201,
+            hash,
+            "Solicitud de cambios enviada con éxito.",
+            exit_status=0,
+        )
         return JSONResponse(
             content={
                 "status": "QUEUED",
                 "message": "Los cambios se aplicarán en unos minutos.",
                 "changes": payload.changes,
-                "brief": sentence,
                 "hash": hash,
             },
             status_code=201,
         )
     except Exception as e:
         printer.error(f"❌ Error al solicitar cambios de una sentencia: {e}")
+        csv_logger.log(
+            "POST /sentencia/{hash}/request-changes",
+            500,
+            hash,
+            f"Error al solicitar cambios de una sentencia: {e}",
+            exit_status=1,
+        )
         raise HTTPException(
             status_code=500,
             detail={"status": "ERROR", "message": str(e)},
@@ -136,6 +178,13 @@ async def generate_sentence_brief_route(
         if not images and not documents:
             printer.error(
                 "Debes enviar al menos un documento o una imagen para generar la sentencia ciudadana."
+            )
+            csv_logger.log(
+                "POST /generate-sentence-brief",
+                400,
+                None,
+                "Debes enviar al menos un documento o una imagen para generar la sentencia ciudadana.",
+                exit_status=1,
             )
             raise HTTPException(
                 status_code=400,
@@ -169,8 +218,6 @@ async def generate_sentence_brief_route(
             except json.JSONDecodeError:
                 printer.error("❌ Error al decodificar el JSON enviado en extra_data")
 
-        printer.yellow("🔄 Generando sentencia ciudadana en segundo plano.")
-
         use_cache = extra_info.get("use_cache", True)
         process_async = extra_info.get("async", True)
         messages = format_messages(document_paths, images_paths)
@@ -193,6 +240,13 @@ async def generate_sentence_brief_route(
                     messages_hash,
                     len(document_paths),
                     len(images_paths),
+                )
+                csv_logger.log(
+                    "POST /generate-sentence-brief",
+                    200,
+                    messages_hash,
+                    "Sentencia ciudadana obtenida de caché.",
+                    exit_status=0,
                 )
                 return response
 
@@ -222,6 +276,13 @@ async def generate_sentence_brief_route(
                 f"sentence_brief:{messages_hash}", result, ex=EXPIRATION_TIME
             )
 
+            csv_logger.log(
+                "POST /generate-sentence-brief",
+                200,
+                messages_hash,
+                "Sentencia ciudadana generada con éxito de forma síncrona.",
+                exit_status=0,
+            )
             return JSONResponse(
                 content=format_response(
                     result,
@@ -232,6 +293,17 @@ async def generate_sentence_brief_route(
                 ),
                 status_code=200,
             )
+        printer.green(
+            f"Sentencia ciudadana en proceso de generación en segundo plano, HASH: {messages_hash}"
+        )
+
+        csv_logger.log(
+            "POST /generate-sentence-brief",
+            201,
+            messages_hash,
+            "Sentencia ciudadana en cola...",
+            exit_status=0,
+        )
 
         return JSONResponse(
             content={

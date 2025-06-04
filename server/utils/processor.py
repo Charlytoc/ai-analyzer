@@ -20,7 +20,7 @@ from server.ai.vector_store import get_chroma_client
 from server.utils.detectors import is_spanish
 
 EXPIRATION_TIME = 60 * 60 * 24 * 30
-LIMIT_CHARACTERS_FOR_TEXT = int(os.getenv("LIMIT_CHARACTERS_FOR_ANALYSIS", 25000))
+LIMIT_CHARACTERS_FOR_TEXT = int(os.getenv("CONTEXT_WINDOW_SIZE", 25000))
 
 N_CHARACTERS_FOR_FEEDBACK_VECTORIZATION = 3000
 
