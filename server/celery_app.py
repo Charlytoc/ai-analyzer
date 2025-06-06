@@ -10,7 +10,7 @@ REDIS_PORT = os.getenv("REDIS_PORT", "6380")
 REDIS_DB = os.getenv("REDIS_DB", "0")
 REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
 
-print("Initializing Celery with Redis URL:", REDIS_URL)
+
 # Inicializa Celery
 celery = Celery(
     "sentencia_tasks",

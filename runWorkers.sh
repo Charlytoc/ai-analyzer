@@ -108,5 +108,6 @@ fi
 BROKER_URL="redis://${REDIS_HOST}:${REDIS_PORT}/${REDIS_DB}"
 echo "🚀 Iniciando Celery worker con broker: $BROKER_URL"
 
+
 celery -A server.celery_app worker --loglevel=info --concurrency=$CONCURRENCY -E -n "worker@%h"
 

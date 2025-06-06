@@ -260,6 +260,9 @@ async def generate_sentence_brief_route(
             os.remove(document_path)
 
         if process_async:
+            printer.yellow(
+                f"🔄 Enviando tarea de generación de sentencia ciudadana a cola de tareas, HASH: {messages_hash}"
+            )
             generate_brief_task.delay(
                 messages,
                 messages_hash,

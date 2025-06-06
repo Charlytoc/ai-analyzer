@@ -273,11 +273,14 @@ def update_system_prompt(previous_messages: list[dict], new_system_prompt: str):
     return previous_messages
 
 
-def append_to_user_message(previous_messages: list[dict], new_user_message: str):
+def change_user_message(previous_messages: list[dict], new_user_message: str):
     for message in previous_messages:
         if message["role"] == "user":
             message["content"] = new_user_message
     return previous_messages
+
+
+
 
 
 def update_sentence_brief(hash: str, changes: str):
@@ -289,7 +292,7 @@ def update_sentence_brief(hash: str, changes: str):
         previous_messages,
         system_editor_prompt.replace("{{sentencia}}", sentence),
     )
-    previous_messages = append_to_user_message(
+    previous_messages = change_user_message(
         previous_messages,
         f"-----\nPor favor realiza únicamente los cambios que se te indican a continuación. Debes retornar únicamente el texto correspondiente a la sentencia ciudadana con los cambios realizados. Los cambios que debes realizar son: {changes}",
     )

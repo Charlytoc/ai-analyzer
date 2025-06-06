@@ -1,4 +1,5 @@
 import traceback
+import json
 
 from server.celery_app import celery
 from server.utils.printer import Printer
@@ -14,19 +15,46 @@ printer = Printer(name="tasks")
 csv_logger = CSVLogger("tasks_log.csv")
 
 
+def cut_user_message(previous_messages: list[dict], n_characters_to_cut: int):
+    for message in previous_messages:
+        if message["role"] == "user":
+            if n_characters_to_cut == 0:
+                continue
+            message["content"] = message["content"][:-n_characters_to_cut]
+    return previous_messages
+
+
 @celery.task(
     name="generate_sentence_brief",
     autoretry_for=(Exception,),
-    retry_kwargs={"max_retries": 3, "countdown": 10},
+    retry_kwargs={"countdown": 10},
     retry_backoff=True,
+    bind=True,
+    max_retries=5,
 )
 def generate_brief_task(
-    messages: list, messages_hash: str, n_documents: int, n_images: int
+    self,
+    messages: list,
+    messages_hash: str,
+    n_documents: int,
+    n_images: int,
 ) -> dict:
     task_name = "generate_sentence_brief"
-    timestamp = datetime.utcnow().isoformat()
+    N_CHARACTERS_TO_CUT = 5000
+    is_first_attempt = self.request.retries == 0
     try:
-        printer.info("Procesando mensajes para generar una sentencia ciudadana")
+        printer.info(
+            f"Procesando mensajes para generar una sentencia ciudadana, intento #{self.request.retries} de {self.max_retries}"
+        )
+        if not is_first_attempt:
+            printer.info(
+                f"Cortando mensajes para reintentar la generación de una sentencia ciudadana con menos caracteres, intento #{self.request.retries} de {self.max_retries}"
+            )
+            messages = cut_user_message(
+                messages, N_CHARACTERS_TO_CUT * (self.request.retries)
+            )
+            print(len(json.dumps(messages)), "characters")
+        # raise Exception("test")
         sentence_brief = generate_sentence_brief(messages, messages_hash)
         resumen = format_response(
             sentence_brief, False, messages_hash, n_documents, n_images
@@ -41,7 +69,7 @@ def generate_brief_task(
         )
         return "Resumen generado correctamente"
     except Exception as e:
-        printer.error("Error en tarea:", e)
+        printer.error("Error generando una sentencia ciudadana:", e)
         tb = traceback.format_exc()
         printer.error(tb)
         csv_logger.log(
@@ -57,10 +85,12 @@ def generate_brief_task(
 @celery.task(
     name="update_sentence_brief",
     autoretry_for=(Exception,),
-    retry_kwargs={"max_retries": 3, "countdown": 10},
+    retry_kwargs={"countdown": 10},
     retry_backoff=True,
+    bind=True,
+    max_retries=4,
 )
-def update_brief_task(messages_hash: str, changes: str) -> dict:
+def update_brief_task(self, messages_hash: str, changes: str) -> dict:
     task_name = "update_sentence_brief"
     try:
         result = update_sentence_brief(messages_hash, changes)
@@ -75,7 +105,7 @@ def update_brief_task(messages_hash: str, changes: str) -> dict:
         return "Resumen actualizado correctamente"
     except Exception as e:
         tb = traceback.format_exc()
-        printer.error("Error en tarea:", e)
+        printer.error("Error actualizando una sentencia ciudadana:", e)
         printer.error(tb)
         csv_logger.log(
             endpoint=task_name,
