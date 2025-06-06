@@ -157,6 +157,9 @@ def read_documents(document_paths: list[str]):
                 f"🔍 Se agrega parte del documento y el resto es vectorizado: {document_path}"
             )
             text_from_all_documents += f"<document_text name='{document_path}'>: \n{truncated}\n </document_text>"
+            printer.yellow(
+                f"🔍 Caracteres antes de vectorizar: {len(text_from_all_documents)}"
+            )
             created = chroma_client.get_collection_or_none(f"doc_{document_hash}")
             if not created:
                 printer.blue(
@@ -173,6 +176,9 @@ def read_documents(document_paths: list[str]):
 
             faq_results = get_faq_results(document_hash)
             text_from_all_documents += f"<faq_results for_document='{document_path}'>: {faq_results}</faq_results>"
+            printer.yellow(
+                f"🔍 Caracteres después de vectorizar: {len(text_from_all_documents)}"
+            )
 
     return text_from_all_documents
 
@@ -217,16 +223,7 @@ def format_messages(document_paths: list[str], images_paths: list[str]):
         )
 
     messages = [{"role": "system", "content": system_prompt}]
-    # messages = []
     messages.append(
-        # {
-        #     "role": "user",
-        #     "content": "<SYSTEM>\n\n"
-        #     + system_prompt
-        #     + "\n\n</SYSTEM>\n\n<USER>\n\n"
-        #     + user_message_text
-        #     + "\n\n</USER>",
-        # }
         {
             "role": "user",
             "content": user_message_text,
@@ -278,9 +275,6 @@ def change_user_message(previous_messages: list[dict], new_user_message: str):
         if message["role"] == "user":
             message["content"] = new_user_message
     return previous_messages
-
-
-
 
 
 def update_sentence_brief(hash: str, changes: str):
