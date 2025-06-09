@@ -50,10 +50,11 @@ def generate_brief_task(
             printer.info(
                 f"Cortando mensajes para reintentar la generación de una sentencia ciudadana con menos caracteres, intento #{self.request.retries} de {self.max_retries}"
             )
+            print(len(json.dumps(messages)), "characters before cut")
             messages = cut_user_message(
                 messages, N_CHARACTERS_TO_CUT * (self.request.retries)
             )
-            print(len(json.dumps(messages)), "characters")
+            print(len(json.dumps(messages)), "characters after cut")
         # raise Exception("test")
         sentence_brief = generate_sentence_brief(messages, messages_hash)
         resumen = format_response(
