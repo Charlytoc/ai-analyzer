@@ -22,3 +22,6 @@ tasks_log.csv
 error.log
 
 s1.md
+
+
+logs/*

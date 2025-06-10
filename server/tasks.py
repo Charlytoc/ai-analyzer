@@ -9,7 +9,6 @@ from server.utils.processor import (
     format_response,
 )
 from server.utils.csv_logger import CSVLogger
-from datetime import datetime
 
 printer = Printer(name="tasks")
 csv_logger = CSVLogger("tasks_log.csv")
@@ -18,8 +17,6 @@ csv_logger = CSVLogger("tasks_log.csv")
 def cut_user_message(previous_messages: list[dict], n_characters_to_cut: int):
     for message in previous_messages:
         if message["role"] == "user":
-            if n_characters_to_cut == 0:
-                continue
             message["content"] = message["content"][:-n_characters_to_cut]
     return previous_messages
 
@@ -42,19 +39,28 @@ def generate_brief_task(
     task_name = "generate_sentence_brief"
     N_CHARACTERS_TO_CUT = 5000
     is_first_attempt = self.request.retries == 0
+    task_traceback = ""
     try:
         printer.info(
             f"Procesando mensajes para generar una sentencia ciudadana, intento #{self.request.retries} de {self.max_retries}"
         )
+        task_traceback += f"Procesando mensajes para generar una sentencia ciudadana, intento #{self.request.retries} de {self.max_retries}\n"
         if not is_first_attempt:
             printer.info(
                 f"Cortando mensajes para reintentar la generación de una sentencia ciudadana con menos caracteres, intento #{self.request.retries} de {self.max_retries}"
             )
-            print(len(json.dumps(messages)), "characters before cut")
+            task_traceback += f"Cortando mensajes para reintentar la generación de una sentencia ciudadana con menos caracteres, intento #{self.request.retries} de {self.max_retries}\n"
+            # print(len(json.dumps(messages)), "characters before cut")
+            task_traceback += (
+                f"Antes de cortar: {len(json.dumps(messages))} caracteres\n"
+            )
             messages = cut_user_message(
                 messages, N_CHARACTERS_TO_CUT * (self.request.retries)
             )
-            print(len(json.dumps(messages)), "characters after cut")
+            # print(len(json.dumps(messages)), "characters after cut")
+            task_traceback += (
+                f"Después de cortar: {len(json.dumps(messages))} caracteres\n"
+            )
         # raise Exception("test")
         sentence_brief = generate_sentence_brief(messages, messages_hash)
         resumen = format_response(
@@ -72,6 +78,8 @@ def generate_brief_task(
     except Exception as e:
         printer.error("Error generando una sentencia ciudadana:", e)
         tb = traceback.format_exc()
+        task_traceback += f"Error generando una sentencia ciudadana: {e}\n"
+        task_traceback += f"Traceback: {tb}\n"
         printer.error(tb)
         csv_logger.log(
             endpoint=task_name,

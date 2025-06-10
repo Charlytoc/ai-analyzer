@@ -77,11 +77,13 @@ def mensajes_error_unicos(df):
         f"\n{RED}{BOLD}=== Mensajes de error únicos (últimos 40 caracteres) ==={RESET}"
     )
     # Agrupar por hash y mensaje para evitar duplicados
-    mensajes = errores[["hash", "message"]].drop_duplicates()
-    for i, (h, msg) in enumerate(mensajes.values, 1):
+    mensajes = errores[["hash", "message", "http_status"]].drop_duplicates()
+    for i, (h, msg, http_status) in enumerate(mensajes.values, 1):
         msg_str = str(msg)
         resumen = msg_str[-200:] if len(msg_str) > 40 else msg_str
-        print(f"\n{RED}--- Error #{i} ---{RESET} {CYAN}Hash:{RESET} {h}")
+        print(
+            f"\n{RED}--- Error #{i} HTTP {http_status}---{RESET} {CYAN}Hash:{RESET} {h}"
+        )
         print(f"{YELLOW}{resumen}{RESET}")
     print(
         f"\n{BOLD}¿Quieres ver el mensaje completo? Usa la opción 5 e introduce el hash correspondiente.{RESET}"
@@ -123,10 +125,10 @@ def mostrar_resumen_hash(filtrado):
 
 
 def main():
-    if len(sys.argv) < 1:
-        print(f"{RED}Uso: python analize_logs.py{RESET}")
+    if len(sys.argv) < 2:
+        print(f"{RED}Uso: python analize_logs.py <archivo.csv>{RESET}")
         sys.exit(1)
-    archivo = "tasks_log.csv"
+    archivo = sys.argv[1]
     df = pd.read_csv(archivo)
     while True:
         print(f"\n{BOLD}Opciones:{RESET}")
