@@ -14,3 +14,7 @@
 ¿Con qué pruebas acreditó el Juzgado, Sala o Tribunal los hechos argumentados por las partes?  
 ¿Cuál fue la decisión del Juzgado, Sala o Tribunal?  
 ¿Cuáles son los puntos resolutivos (narrarlos, no listarlos)?
+¿Cuáles son los fundamentos jurídicos en que se basa la sentencia?
+¿Se mencionan precedentes o criterios jurisprudenciales relevantes?
+¿La sentencia fue impugnada mediante algún recurso?
+¿Cuál es el plazo para el cumplimiento de la sentencia o para interponer recursos? (Tiempos procesales relevantes para las partes).

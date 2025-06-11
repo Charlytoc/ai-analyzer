@@ -20,7 +20,8 @@ from server.ai.vector_store import get_chroma_client
 from server.utils.detectors import is_spanish
 
 EXPIRATION_TIME = 60 * 60 * 24 * 30
-LIMIT_CHARACTERS_FOR_TEXT = int(os.getenv("CONTEXT_WINDOW_SIZE", 25000))
+# LIMIT_CHARACTERS_FOR_TEXT = int(os.getenv("CONTEXT_WINDOW_SIZE", 10000))
+LIMIT_CHARACTERS_FOR_TEXT = 11000
 
 N_CHARACTERS_FOR_FEEDBACK_VECTORIZATION = 3000
 
@@ -75,7 +76,7 @@ def get_faq_results(doc_hash: str):
         documents.update(_documents)
 
     results_str += (
-        f"Lista de preguntas para la base de datos vectorial: {' '.join(questions)}"
+        f"Número de preguntas para la base de datos vectorial: {len(questions)}"
     )
     documents = remove_duplicates(documents)
     results_str += f"Resultados de la búsqueda: {' '.join(documents)}"
@@ -175,6 +176,7 @@ def read_documents(document_paths: list[str]):
                 )
 
             faq_results = get_faq_results(document_hash)
+            printer.yellow(f"🔍 FAQ results length: {len(faq_results)}")
             text_from_all_documents += f"<faq_results for_document='{document_path}'>: {faq_results}</faq_results>"
             printer.yellow(
                 f"🔍 Caracteres después de vectorizar: {len(text_from_all_documents)}"

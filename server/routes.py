@@ -229,6 +229,11 @@ async def generate_sentence_brief_route(
             f"messages_input:{messages_hash}", messages_json, ex=EXPIRATION_TIME
         )
 
+        for image_path in images_paths:
+            os.remove(image_path)
+        for document_path in document_paths:
+            os.remove(document_path)
+
         if use_cache:
             cached_response = redis_cache.get(f"sentence_brief:{messages_hash}")
             if cached_response:
@@ -253,11 +258,6 @@ async def generate_sentence_brief_route(
         printer.yellow(
             f"🔍 No se encontró la sentencia ciudadana en cache: {messages_hash}"
         )
-
-        for image_path in images_paths:
-            os.remove(image_path)
-        for document_path in document_paths:
-            os.remove(document_path)
 
         if process_async:
             printer.yellow(
