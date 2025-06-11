@@ -27,6 +27,12 @@ from server.tasks import generate_brief_task, update_brief_task
 
 csv_logger = CSVLogger()
 
+DEFAULT_CACHE_BEHAVIOR = os.environ.get("DEFAULT_CACHE_BEHAVIOR", "false")
+if DEFAULT_CACHE_BEHAVIOR.lower().strip() == "true":
+    DEFAULT_CACHE_BEHAVIOR = True
+else:
+    DEFAULT_CACHE_BEHAVIOR = False
+
 UPLOADS_PATH = "uploads"
 os.makedirs(f"{UPLOADS_PATH}/images", exist_ok=True)
 os.makedirs(f"{UPLOADS_PATH}/documents", exist_ok=True)
@@ -218,7 +224,8 @@ async def generate_sentence_brief_route(
             except json.JSONDecodeError:
                 printer.error("❌ Error al decodificar el JSON enviado en extra_data")
 
-        use_cache = extra_info.get("use_cache", True)
+        # use_cache = extra_info.get("use_cache", DEFAULT_CACHE_BEHAVIOR)
+        use_cache = DEFAULT_CACHE_BEHAVIOR
         process_async = extra_info.get("async", True)
         messages = format_messages(document_paths, images_paths)
 

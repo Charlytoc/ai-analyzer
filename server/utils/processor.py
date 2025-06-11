@@ -21,7 +21,7 @@ from server.utils.detectors import is_spanish
 
 EXPIRATION_TIME = 60 * 60 * 24 * 30
 # LIMIT_CHARACTERS_FOR_TEXT = int(os.getenv("CONTEXT_WINDOW_SIZE", 10000))
-LIMIT_CHARACTERS_FOR_TEXT = 11000
+LIMIT_CHARACTERS_FOR_TEXT = 15000
 
 N_CHARACTERS_FOR_FEEDBACK_VECTORIZATION = 3000
 
@@ -79,7 +79,13 @@ def get_faq_results(doc_hash: str):
         f"Número de preguntas para la base de datos vectorial: {len(questions)}"
     )
     documents = remove_duplicates(documents)
-    results_str += f"Resultados de la búsqueda: {' '.join(documents)}"
+    results_str += (
+        f"Resultados de la búsqueda en base de datos vectorial: {' '.join(documents)}"
+    )
+    # Save as a file called "faq_results.txt"
+    with open("faq_results.txt", "w") as f:
+        f.write(results_str)
+
     try:
         chroma_client.delete_collection(f"doc_{doc_hash}")
     except Exception as e:
@@ -168,7 +174,7 @@ def read_documents(document_paths: list[str]):
                 )
                 chroma_client.get_or_create_collection(f"doc_{document_hash}")
                 chunks = chroma_client.chunkify(
-                    document_text, chunk_size=1000, chunk_overlap=200
+                    document_text, chunk_size=1500, chunk_overlap=400
                 )
                 chroma_client.bulk_upsert_chunks(
                     collection_name=f"doc_{document_hash}",
