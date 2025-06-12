@@ -224,8 +224,8 @@ async def generate_sentence_brief_route(
             except json.JSONDecodeError:
                 printer.error("❌ Error al decodificar el JSON enviado en extra_data")
 
-        # use_cache = extra_info.get("use_cache", DEFAULT_CACHE_BEHAVIOR)
-        use_cache = DEFAULT_CACHE_BEHAVIOR
+        use_cache = extra_info.get("use_cache", DEFAULT_CACHE_BEHAVIOR)
+        # use_cache = DEFAULT_CACHE_BEHAVIOR
         process_async = extra_info.get("async", True)
         messages = format_messages(document_paths, images_paths)
 
