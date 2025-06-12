@@ -19,6 +19,6 @@
 ¿La sentencia fue impugnada mediante algún recurso?
 ¿Cuál es el plazo para el cumplimiento de la sentencia o para interponer recursos? (Tiempos procesales relevantes para las partes).
 Se condena a las partes
-Se decreta
+Se decreta PRIMERO
 Ha sido procedente el PROCEDIMIENTO, promovido por PERSONA en contra de OTRA PERSONA
-Resuelve
+El juez resuelve que
