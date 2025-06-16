@@ -261,6 +261,11 @@ async def generate_sentence_brief_route(
                     exit_status=0,
                 )
                 return response
+        else:
+            printer.yellow(
+                f"🔍 Eliminando la sentencia ciudadana de la caché si existe: {messages_hash}"
+            )
+            redis_cache.delete(f"sentence_brief:{messages_hash}")
 
         printer.yellow(
             f"🔍 No se encontró la sentencia ciudadana en cache: {messages_hash}"
