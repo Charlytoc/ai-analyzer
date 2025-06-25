@@ -128,4 +128,4 @@ fi
 export ENVIRONMENT=$MODE
 
 echo "🚀 Iniciando la aplicación FastAPI..."
-python main.py
+python3 main.py
