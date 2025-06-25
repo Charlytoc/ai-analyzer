@@ -16,4 +16,14 @@ pip install --upgrade pip
 pip install vllm
 pip install git+https://github.com/huggingface/transformers.git
 
-vllm serve google/gemma-3-12b-it --host 0.0.0.0 --port 8009 --dtype bfloat16 --max-model-len 15000 --max-num-seqs 3
+# login in huggingface
+# huggingface-cli login
+
+# Download the model locally to 
+# huggingface-cli download google/gemma-3-12b-it --local-dir ./server/ai/model/gemma-3-12b-it
+
+
+# vllm serve google/gemma-3-12b-it --host 0.0.0.0 --port 8009 --dtype bfloat16 --max-model-len 25000 --max-num-seqs 3
+
+# To run locally
+vllm serve ./server/ai/model/gemma-3-12b --dtype bfloat16 --max-num-seqs 8 --max-model-len 25000
