@@ -206,7 +206,8 @@ class OpenAIProvider:
         random_id = str(uuid.uuid4())
         # Save the response to a file
         with open(f"{RESPONSES_DIR}/{random_id}.json", "w") as f:
-            json.dump(response, f)
+            json.dump(response.model_dump(), f)
+
         # Save the messages to a file
         with open(f"{RESPONSES_DIR}/{random_id}_messages.json", "w") as f:
             json.dump(messages, f)
