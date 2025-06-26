@@ -130,6 +130,13 @@ def clean_markdown_block(text: str) -> str:
     return content.strip()
 
 
+def clean_reasoning_tag(text: str):
+    end_index = text.find("</think>")
+    if end_index == -1:
+        return text
+    return text[end_index + len("</think>") :].lstrip()
+
+
 def read_documents(document_paths: list[str]):
     chroma_client = get_chroma_client()
     number_of_documents = len(document_paths)
@@ -254,6 +261,7 @@ def generate_sentence_brief(
 
     response = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
     response = clean_markdown_block(response)
+    response = clean_reasoning_tag(response)
     if not is_spanish(response[:150]):
         printer.yellow("🔍 La respuesta no está en español, traduciendo...")
         printer.yellow(f"🔍 Respuesta original: {response}")
@@ -312,6 +320,7 @@ def update_sentence_brief(hash: str, changes: str):
         model=os.getenv("MODEL", "gemma3"),
     )
     response = clean_markdown_block(response)
+    response = clean_reasoning_tag(response)
     redis_cache.set(f"sentence_brief:{hash}", response, ex=EXPIRATION_TIME)
     return response
 
