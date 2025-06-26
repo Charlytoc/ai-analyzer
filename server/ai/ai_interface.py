@@ -1,5 +1,7 @@
 import os
 import shutil
+import json
+import uuid
 import subprocess
 from functools import lru_cache
 
@@ -197,7 +199,19 @@ class OpenAIProvider:
             tools=tools,
             stream=stream,
         )
-        # printer.yellow(response, "RESPONSE")
+        RESPONSES_DIR = os.getenv("RESPONSES_DIR", "server/ai/responses")
+        # Create the directory if it doesn't exist
+        os.makedirs(RESPONSES_DIR, exist_ok=True)
+
+        random_id = str(uuid.uuid4())
+        # Save the response to a file
+        with open(f"{RESPONSES_DIR}/{model}_{random_id}.json", "w") as f:
+            json.dump(response, f)
+        # Save the messages to a file
+        with open(f"{RESPONSES_DIR}/{model}_{random_id}_messages.json", "w") as f:
+            json.dump(messages, f)
+
+        print(f"Response saved to {RESPONSES_DIR}/{model}_{random_id}.json")
 
         return response.choices[0].message.content
 
