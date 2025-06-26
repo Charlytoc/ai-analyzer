@@ -74,7 +74,7 @@ def generate_brief_task(
                 f"El prompt {len(prompt)} caracteres es demasiado largo y resulta en un prompt de {count} tokens, se necesitan {difference} tokens más. Cortando el prompt."
             )
             task_traceback += f"El prompt {len(prompt)} caracteres es demasiado largo y resulta en un prompt de {count} tokens, se necesitan {difference} tokens más. Cortando el prompt.\n"
-            messages = cut_user_message(messages, difference)
+            messages = cut_user_message(messages, N_CHARACTERS_TO_CUT)
             # raise Exception("El prompt es demasiado largo")
         sentence_brief = generate_sentence_brief(messages, messages_hash)
         resumen = format_response(
