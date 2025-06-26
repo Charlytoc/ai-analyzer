@@ -10,7 +10,11 @@ ai = AIInterface(
 response = ai.chat(
     model=model_to_use,
     messages=[
-        {"role": "user", "content": "Hola, ¿cómo estás?"},
+        {
+            "role": "system",
+            "content": "Eres un asistente de IA que responde preguntas sobre la vida de Francisco de Goya",
+        },
+        {"role": "user", "content": "¿Quién es Francisco de Goya?"},
     ],
 )
 

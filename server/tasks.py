@@ -9,6 +9,7 @@ from server.utils.processor import (
     format_response,
 )
 from server.utils.csv_logger import CSVLogger
+from server.ai.ai_interface import tokenize_prompt
 
 printer = Printer(name="tasks")
 csv_logger = CSVLogger("tasks_log.csv")
@@ -64,7 +65,17 @@ def generate_brief_task(
         # Save the messages to a file
         with open("messages.json", "w") as f:
             json.dump(messages, f)
+
+        prompt = messages[-1]["content"] + " " + messages[-2]["content"]
         # raise Exception("test")
+        count, difference, is_difference_more_than_4000 = tokenize_prompt(prompt)
+        if not is_difference_more_than_4000:
+            printer.error(
+                f"El prompt {len(prompt)} caracteres es demasiado largo y resulta en un prompt de {count} tokens, se necesitan {difference} tokens más. Cortando el prompt."
+            )
+            task_traceback += f"El prompt {len(prompt)} caracteres es demasiado largo y resulta en un prompt de {count} tokens, se necesitan {difference} tokens más. Cortando el prompt.\n"
+            messages = cut_user_message(messages, difference)
+            # raise Exception("El prompt es demasiado largo")
         sentence_brief = generate_sentence_brief(messages, messages_hash)
         resumen = format_response(
             sentence_brief, False, messages_hash, n_documents, n_images

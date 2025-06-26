@@ -4,7 +4,6 @@ import json
 import uuid
 import subprocess
 from functools import lru_cache
-
 import requests
 from ollama import Client
 from ..utils.printer import Printer
@@ -255,3 +254,23 @@ class AIInterface:
 
     def check_model(self, model: str):
         return self.client.check_model(model)
+
+
+def tokenize_prompt(prompt: str):
+    # Leer la URL base del .env o usar valor por defecto
+    base_url = os.getenv("PROVIDER_BASE_URL", "http://localhost:8009")
+    url = f"{base_url.rstrip('/')}/tokenize"
+
+    payload = {"prompt": prompt}
+    headers = {"accept": "application/json", "Content-Type": "application/json"}
+
+    response = requests.post(url, json=payload, headers=headers)
+    response.raise_for_status()
+
+    data = response.json()
+    count = data["count"]
+    max_model_len = data["max_model_len"]
+    difference = max_model_len - count
+    is_difference_more_than_4000 = difference > 4000
+
+    return count, difference, is_difference_more_than_4000
