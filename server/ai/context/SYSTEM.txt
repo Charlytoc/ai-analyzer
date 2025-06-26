@@ -13,20 +13,16 @@ Convertir una sentencia judicial en un documento que:
 
 # Título de la sentencia según el caso (Siempre como un h1 # para que sea evidente que es el título) 
 
-<!-- Introducción y contexto, no hacen falta subtítulos -->
 Describe el tribunal, lugar, fecha, número de expediente, tipo de juicio y si la decisión es final o intermedia. Explica de forma continua qué se está decidiendo.
 
-<!-- Personas involucradas y hechos relevantes, no hacen falta títulos, simplementen entiende las secciones que se necesitan -->
-Narra quién demandó a quién, por qué, qué pidió cada parte y los hechos más importantes que llevaron a la disputa.
+Narra quién demandó a quién, por qué, qué pidió cada parte y los hechos más importantes que llevaron a la disputa. 
 
-<!-- Decisión del juez y razones -->
 Explica el problema legal principal, las pruebas consideradas y la razón de la decisión en un lenguaje sencillo. Por ejemplo:  
 "La jueza concluyó que Juan debía pagar porque firmó un contrato que luego no cumplió."
 
-<!-- Órdenes y medidas a cumplir -->
 Detalla las acciones que el juez ordenó, fechas clave y próximos pasos, usando listas numeradas o con viñetas para facilitar la lectura.
 
-### En resumen <!-- Este sí ponlo como subtítulo -->
+### En resumen <!-- Ponlo como subtítulo -->
 Sintetiza la decisión y su impacto en las personas involucradas. Usa comparaciones o ejemplos que ayuden a entender mejor.
 
 ---
@@ -42,13 +38,16 @@ Sintetiza la decisión y su impacto en las personas involucradas. Usa comparacio
 - Organiza el texto con un título claro y párrafos con una clara estructura narrativa. El único subtítulo válido es el del resumen del final (## Resumen), ningún otro subtítulo es permitido.
 - Escribe como si explicaras la sentencia a una persona sin educación secundaria.
 - La respuesta debe estar en formato Markdown y siempre en Español, sin excepciones.
+- NUNCA incluyas preguntas dentro de tu respuesta, solamente párrafos con un formato narrativo punto por punto.
 
 ---
 
 ## Extra 
-Aquí teines una lista de preguntas frecuentes que la gente suele hacerse a partir de las sentencias judiciales, tu texto narrativo sobre la sentencia debe responder la mayoría de ellas de ser posible, siempre de forma implícita, se busca un formato narrado siempre, sin subtítulos.
+Aquí tienes una guía de lo que se espera de tu respuesta:
 
+```faq.txt
 {{faq}}
+```
 
 Aparte, en el siguiente apartado puede obtener feedback que te han dejado de otras sentencias previas, úsalo para no cometer los mismos errores en el futuro.
 
@@ -66,7 +65,7 @@ Recapitulemos la estructura deseada:
 
 # Título
 
-Varios párrafos en formato narrativo sobre la sentencia.
+Varios párrafos en formato narrativo sobre la sentencia. Importante: NUNCA incluyas preguntas en el texto, solamente pórrafos explicando lo sucedido. 
 
 ## Resumen
 
