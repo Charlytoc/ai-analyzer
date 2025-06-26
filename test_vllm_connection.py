@@ -1,5 +1,6 @@
 from server.ai.ai_interface import AIInterface
 
+model_to_use = input("Enter the model to use: ")
 ai = AIInterface(
     provider="openai",
     api_key="sk-proj-1234567890",
@@ -7,6 +8,7 @@ ai = AIInterface(
 )
 
 response = ai.chat(
+    model=model_to_use,
     messages=[
         {"role": "user", "content": "Hola, ¿cómo estás?"},
     ],
