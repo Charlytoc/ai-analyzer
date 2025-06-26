@@ -258,7 +258,8 @@ class AIInterface:
 
 def tokenize_prompt(prompt: str):
     # Leer la URL base del .env o usar valor por defecto
-    base_url = os.getenv("PROVIDER_BASE_URL", "http://localhost:8009")
+    # base_url = os.getenv("PROVIDER_BASE_URL", "http://localhost:8009")
+    base_url = "http://localhost:8009"
     url = f"{base_url.rstrip('/')}/tokenize"
 
     payload = {"prompt": prompt}
