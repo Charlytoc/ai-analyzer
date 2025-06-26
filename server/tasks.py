@@ -61,12 +61,15 @@ def generate_brief_task(
             task_traceback += (
                 f"Después de cortar: {len(json.dumps(messages))} caracteres\n"
             )
+        # Save the messages to a file
+        with open("messages.json", "w") as f:
+            json.dump(messages, f)
         # raise Exception("test")
         sentence_brief = generate_sentence_brief(messages, messages_hash)
         resumen = format_response(
             sentence_brief, False, messages_hash, n_documents, n_images
         )
-        printer.debug("Resumen generado: ", resumen)
+        printer.yellow("Resumen generado: ", resumen)
         csv_logger.log(
             endpoint=task_name,
             http_status=200,
