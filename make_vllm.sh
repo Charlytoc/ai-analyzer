@@ -26,4 +26,6 @@ pip install git+https://github.com/huggingface/transformers.git
 # vllm serve google/gemma-3-12b-it --host 0.0.0.0 --port 8009 --dtype bfloat16 --max-model-len 25000 --max-num-seqs 3
 
 # To run locally
-vllm serve ./server/ai/models/gemma3_12b --dtype bfloat16 --max-num-seqs 8 --max-model-len 25000
+
+vllm serve ./server/ai/models/gemma3_12b --dtype bfloat16 --max-num-seqs 8 --max-model-len 25000 --host 0.0.0.0 --port 8009
+

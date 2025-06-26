@@ -256,6 +256,7 @@ def generate_sentence_brief(
     response = clean_markdown_block(response)
     if not is_spanish(response[:150]):
         printer.yellow("🔍 La respuesta no está en español, traduciendo...")
+        printer.yellow(f"🔍 Respuesta original: {response}")
         response = translate_to_spanish(response)
         response = clean_markdown_block(response)
     else:
