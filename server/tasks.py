@@ -51,7 +51,7 @@ def generate_brief_task(
                 f"Cortando mensajes para reintentar la generación de una sentencia ciudadana con menos caracteres, intento #{self.request.retries} de {self.max_retries}"
             )
             task_traceback += f"Cortando mensajes para reintentar la generación de una sentencia ciudadana con menos caracteres, intento #{self.request.retries} de {self.max_retries}\n"
-            # print(len(json.dumps(messages)), "characters before cut")
+
             task_traceback += (
                 f"Antes de cortar: {len(json.dumps(messages))} caracteres\n"
             )
@@ -71,10 +71,12 @@ def generate_brief_task(
         count, difference, is_difference_more_than_4000 = tokenize_prompt(prompt)
         if not is_difference_more_than_4000:
             printer.error(
-                f"El prompt {len(prompt)} caracteres es demasiado largo y resulta en un prompt de {count} tokens, se necesitan {difference} tokens más. Cortando el prompt."
+                f"El prompt {len(prompt)} caracteres es demasiado largo y resulta en un prompt de {count} tokens, la diferencia es de {difference} tokens. Cortando el prompt."
             )
-            task_traceback += f"El prompt {len(prompt)} caracteres es demasiado largo y resulta en un prompt de {count} tokens, se necesitan {difference} tokens más. Cortando el prompt.\n"
-            messages = cut_user_message(messages, N_CHARACTERS_TO_CUT)
+            task_traceback += f"El prompt {len(prompt)} caracteres es demasiado largo y resulta en un prompt de {count} tokens, la diferencia es de {difference} tokens. Cortando el prompt.\n"
+            messages = cut_user_message(
+                messages, N_CHARACTERS_TO_CUT * (self.request.retries + 1)
+            )
             # raise Exception("El prompt es demasiado largo")
         sentence_brief = generate_sentence_brief(messages, messages_hash)
         resumen = format_response(
@@ -99,7 +101,7 @@ def generate_brief_task(
             endpoint=task_name,
             http_status=500,
             hash_=messages_hash,
-            message=str(tb),
+            message=str(task_traceback),
             exit_status=1,
         )
         raise

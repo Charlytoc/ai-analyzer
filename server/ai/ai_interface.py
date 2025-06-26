@@ -16,6 +16,8 @@ FAQ_FILE_PATH = os.path.join(CONTEXT_DIR, "FAQ.txt")
 SYSTEM_PROMPT_FILE_PATH = os.path.join(CONTEXT_DIR, "SYSTEM.txt")
 SYSTEM_EDITOR_PROMPT_FILE_PATH = os.path.join(CONTEXT_DIR, "SYSTEM_EDITOR.txt")
 
+DEBUG_MODE = os.getenv("DEBUG_MODE", "false").lower() == "true"
+
 
 @lru_cache()
 def get_faq_questions() -> list[str]:
@@ -176,6 +178,13 @@ class OllamaProvider:
         return response.message.content
 
 
+def cut_user_message(previous_messages: list[dict], n_characters_to_cut: int):
+    for message in previous_messages:
+        if message["role"] == "user":
+            message["content"] = message["content"][:-n_characters_to_cut]
+    return previous_messages
+
+
 class OpenAIProvider:
     def __init__(self, api_key: str, base_url: str = None):
         printer.blue(f"Using OpenAI base URL: {base_url}")
@@ -201,17 +210,23 @@ class OpenAIProvider:
         RESPONSES_DIR = os.getenv("RESPONSES_DIR", "server/ai/responses")
         # Create the directory if it doesn't exist
         os.makedirs(RESPONSES_DIR, exist_ok=True)
+        
+        if DEBUG_MODE:
+            random_id = str(uuid.uuid4())
+            # Save the response to a file
+            with open(f"{RESPONSES_DIR}/{random_id}.json", "w") as f:
+                json.dump(response.model_dump(), f)
 
-        random_id = str(uuid.uuid4())
-        # Save the response to a file
-        with open(f"{RESPONSES_DIR}/{random_id}.json", "w") as f:
-            json.dump(response.model_dump(), f)
+            # Save the messages to a file
+            with open(f"{RESPONSES_DIR}/{random_id}_messages.json", "w") as f:
+                json.dump(messages, f)
 
-        # Save the messages to a file
-        with open(f"{RESPONSES_DIR}/{random_id}_messages.json", "w") as f:
-            json.dump(messages, f)
-
-        print(f"Response saved to {RESPONSES_DIR}/{random_id}.json")
+        if response.choices[0].finish_reason == "length":
+            printer.error(
+                "El modelo dió una respuesta incompleta. Cortando el mensaje de la última conversación y reintentando."
+            )
+            messages = cut_user_message(messages, 5000)
+            return self.chat(messages, model, stream, tools)
 
         return response.choices[0].message.content
 
