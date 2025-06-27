@@ -212,21 +212,18 @@ def read_images(images_paths: list[str]):
 
 
 def format_messages(document_paths: list[str], images_paths: list[str]):
-    # physical_context = get_physical_context()
 
     system_prompt = get_system_prompt()
     if not system_prompt:
         raise ValueError("No se encontró el prompt del sistema.")
 
-    # if physical_context:
-    #     system_prompt = system_prompt.replace("{{context}}", physical_context)
     if len(get_faq_questions()) > 0:
         system_prompt = system_prompt.replace("{{faq}}", "\n".join(get_faq_questions()))
 
     text_from_all_documents = read_documents(document_paths)
     text_from_all_documents += read_images(images_paths)
 
-    user_message_text = f"# These are the sources of information to write the sentence:\n\n{text_from_all_documents}"
+    user_message_text = f"# Estas son las fuentes de información disponibles para escribir la sentencia:\n\n{text_from_all_documents}"
 
     feedback_text = get_feedback_from_vector_store(user_message_text)
 
@@ -267,10 +264,10 @@ def generate_sentence_brief(
         printer.yellow(f"🔍 Respuesta original: {response}")
         response = translate_to_spanish(response)
         response = clean_markdown_block(response)
+        response = clean_reasoning_tag(response)
     else:
         printer.green("🔍 La respuesta ya está en español en el primer intento.")
 
-    response = response
     redis_cache.set(f"sentence_brief:{sentence_hash}", response, ex=EXPIRATION_TIME)
     printer.green(f"💾 Sentencia ciudadana guardada en cache: {sentence_hash}")
 
