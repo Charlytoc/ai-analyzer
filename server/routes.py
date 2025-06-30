@@ -125,7 +125,6 @@ class SentenceRequestChangesPayload(BaseModel):
 
 @router.post("/sentencia/{hash}/request-changes")
 async def request_changes_route(hash: str, payload: SentenceRequestChangesPayload):
-
     try:
         sentence = redis_cache.get(f"sentence_brief:{hash}")
         if not sentence:

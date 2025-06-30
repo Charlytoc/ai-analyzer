@@ -152,12 +152,12 @@ def read_documents(document_paths: list[str]):
         printer.green(f"🔍 Documento leído: {document_path}")
         printer.yellow(f"🔍 Inicio del documento: {document_text[:200]}")
 
-        with open(
-            f"uploads/documents/read/{os.path.basename(document_path)}.txt",
-            "w",
-            encoding="utf-8",
-        ) as f:
-            f.write(document_text)
+        # with open(
+        #     f"uploads/documents/read/{os.path.basename(document_path)}.txt",
+        #     "w",
+        #     encoding="utf-8",
+        # ) as f:
+        #     f.write(document_text)
 
         document_hash = hasher(document_text)
 
