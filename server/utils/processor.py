@@ -1,6 +1,8 @@
 import os
 import hashlib
 import json
+
+import re
 import uuid
 from typing import Literal
 from pydantic import BaseModel, Field, field_validator
@@ -140,6 +142,12 @@ def clean_reasoning_tag(text: str):
     return text[end_index + len("</think>") :].lstrip()
 
 
+def remove_h2_h3_h4_questions(text: str) -> str:
+    # Elimina líneas que sean solo un encabezado (##, ###, ####) seguido de una pregunta
+    pattern = r"^(#{2,4})\s*¿[^?]+\?\s*$"
+    return re.sub(pattern, "", text, flags=re.MULTILINE).strip()
+
+
 def read_documents(document_paths: list[str]):
     chroma_client = get_chroma_client()
     number_of_documents = len(document_paths)
@@ -262,12 +270,14 @@ def generate_sentence_brief(
     response = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
     response = clean_markdown_block(response)
     response = clean_reasoning_tag(response)
+    response = remove_h2_h3_h4_questions(response)
     if not is_spanish(response[:150]):
         printer.yellow("🔍 La respuesta no está en español, traduciendo...")
         printer.yellow(f"🔍 Respuesta original: {response}")
         response = translate_to_spanish(response)
         response = clean_markdown_block(response)
         response = clean_reasoning_tag(response)
+        response = remove_h2_h3_h4_questions(response)
     else:
         printer.green("🔍 La respuesta ya está en español en el primer intento.")
 
