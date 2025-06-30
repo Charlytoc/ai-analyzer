@@ -33,6 +33,7 @@ if DEFAULT_CACHE_BEHAVIOR.lower().strip() == "true":
 else:
     DEFAULT_CACHE_BEHAVIOR = False
 
+
 UPLOADS_PATH = "uploads"
 os.makedirs(f"{UPLOADS_PATH}/images", exist_ok=True)
 os.makedirs(f"{UPLOADS_PATH}/documents", exist_ok=True)
@@ -71,6 +72,8 @@ async def get_sentence_brief_route(hash: str):
         "Sentencia ciudadana encontrada en caché.",
         exit_status=0,
     )
+
+    redis_cache.delete(f"sentence_brief:{hash}")
     return JSONResponse(
         content={
             "status": "SUCCESS",
@@ -78,6 +81,7 @@ async def get_sentence_brief_route(hash: str):
             "brief": sentencia,
             "hash": hash,
             "warning": get_warning_text(),
+            "storage_status": "DELETED",
         },
         status_code=200,
     )
@@ -90,7 +94,7 @@ class SentenceUpdatePayload(BaseModel):
 @router.put("/sentencia/{hash}")
 async def update_sentence_brief_route(hash: str, payload: SentenceUpdatePayload):
     try:
-        redis_cache.set(f"sentence_brief:{hash}", payload.sentence)
+        redis_cache.set(f"sentence_brief:{hash}", payload.sentence, ex=EXPIRATION_TIME)
 
         csv_logger.log(
             "PUT /sentencia/{hash}",
@@ -120,13 +124,14 @@ async def update_sentence_brief_route(hash: str, payload: SentenceUpdatePayload)
 
 
 class SentenceRequestChangesPayload(BaseModel):
+    sentence: str
     changes: str
 
 
 @router.post("/sentencia/{hash}/request-changes")
 async def request_changes_route(hash: str, payload: SentenceRequestChangesPayload):
     try:
-        sentence = redis_cache.get(f"sentence_brief:{hash}")
+        sentence = payload.sentence
         if not sentence:
             raise HTTPException(
                 status_code=404,
@@ -138,7 +143,7 @@ async def request_changes_route(hash: str, payload: SentenceRequestChangesPayloa
 
         printer.yellow("🔄 Actualizando sentencia ciudadana en otro hilo...")
 
-        update_brief_task.delay(hash, payload.changes)
+        update_brief_task.delay(hash, sentence, payload.changes)
 
         upsert_feedback_in_vector_store(hash, payload.changes)
 

@@ -2,6 +2,7 @@ import os
 import redis
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 
@@ -26,6 +27,7 @@ class RedisCache:
         self.client.set(key, value, ex=ex)
 
     def delete(self, key: str) -> None:
+        print(f"🔍 Borrando clave: {key} del caché")
         self.client.delete(key)
 
     def flush_all(self):

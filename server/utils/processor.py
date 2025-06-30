@@ -19,7 +19,8 @@ from server.utils.image_reader import ImageReader
 from server.ai.vector_store import get_chroma_client
 from server.utils.detectors import is_spanish
 
-EXPIRATION_TIME = 60 * 60 * 24 * 30
+
+EXPIRATION_TIME = 60 * 60 * 24  # 24 horas
 # LIMIT_CHARACTERS_FOR_TEXT = int(os.getenv("CONTEXT_WINDOW_SIZE", 10000))
 LIMIT_CHARACTERS_FOR_TEXT = 10000
 
@@ -131,9 +132,11 @@ def clean_markdown_block(text: str) -> str:
 
 
 def clean_reasoning_tag(text: str):
+    # Print the reasoning content
     end_index = text.find("</think>")
     if end_index == -1:
         return text
+    printer.yellow(f"🔍 Reasoning content: {text[end_index + len('</think>'):]}")
     return text[end_index + len("</think>") :].lstrip()
 
 
@@ -291,21 +294,20 @@ def change_user_message(previous_messages: list[dict], new_user_message: str):
     return previous_messages
 
 
-def update_sentence_brief(hash: str, changes: str):
-    sentence = redis_cache.get(f"sentence_brief:{hash}")
-    previous_messages = redis_cache.get(f"messages_input:{hash}")
-    previous_messages = json.loads(previous_messages)
+def update_sentence_brief(hash: str, sentence: str, changes: str):
+    # previous_messages = redis_cache.get(f"messages_input:{hash}")
+    # previous_messages = json.loads(previous_messages)
     system_editor_prompt = get_system_editor_prompt()
-    previous_messages = update_system_prompt(
-        previous_messages,
-        system_editor_prompt.replace("{{sentencia}}", sentence),
-    )
-    previous_messages = change_user_message(
-        previous_messages,
-        f"-----\nPor favor realiza únicamente los cambios que se te indican a continuación. Debes retornar únicamente el texto correspondiente a la sentencia ciudadana con los cambios realizados. Los cambios que debes realizar son: {changes}",
-    )
-    if not sentence:
-        raise ValueError("No se encontró la sentencia ciudadana.")
+    messages = [
+        {
+            "role": "system",
+            "content": system_editor_prompt.replace("{{sentencia}}", sentence),
+        },
+        {
+            "role": "user",
+            "content": f"-----\nPor favor realiza únicamente los cambios que se te indican a continuación. Debes retornar únicamente el texto correspondiente a la sentencia ciudadana con los cambios realizados. Los cambios que debes realizar son: {changes}.",
+        },
+    ]
 
     ai_interface = AIInterface(
         provider=os.getenv("PROVIDER", "ollama"),
@@ -313,11 +315,12 @@ def update_sentence_brief(hash: str, changes: str):
         base_url=os.getenv("PROVIDER_BASE_URL", None),
     )
     response = ai_interface.chat(
-        messages=previous_messages,
+        messages=messages,
         model=os.getenv("MODEL", "gemma3"),
     )
     response = clean_markdown_block(response)
     response = clean_reasoning_tag(response)
+    printer.yellow(f"🔍 Respuesta final al reescribir la sentencia: {response}")
     redis_cache.set(f"sentence_brief:{hash}", response, ex=EXPIRATION_TIME)
     return response
 

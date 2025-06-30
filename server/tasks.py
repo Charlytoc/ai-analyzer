@@ -11,6 +11,7 @@ from server.utils.processor import (
 from server.utils.csv_logger import CSVLogger
 from server.ai.ai_interface import tokenize_prompt
 
+
 printer = Printer(name="tasks")
 csv_logger = CSVLogger("tasks_log.csv")
 
@@ -67,7 +68,7 @@ def generate_brief_task(
             json.dump(messages, f)
 
         prompt = messages[-1]["content"] + " " + messages[-2]["content"]
-        # raise Exception("test")
+
         count, difference, is_difference_more_than_4000 = tokenize_prompt(prompt)
         if not is_difference_more_than_4000:
             printer.error(
@@ -77,7 +78,7 @@ def generate_brief_task(
             messages = cut_user_message(
                 messages, N_CHARACTERS_TO_CUT * (self.request.retries + 1)
             )
-            # raise Exception("El prompt es demasiado largo")
+        
         sentence_brief = generate_sentence_brief(messages, messages_hash)
         resumen = format_response(
             sentence_brief, False, messages_hash, n_documents, n_images
@@ -115,10 +116,10 @@ def generate_brief_task(
     bind=True,
     max_retries=4,
 )
-def update_brief_task(self, messages_hash: str, changes: str) -> dict:
+def update_brief_task(self, messages_hash: str, sentence: str, changes: str) -> dict:
     task_name = "update_sentence_brief"
     try:
-        result = update_sentence_brief(messages_hash, changes)
+        result = update_sentence_brief(messages_hash, sentence, changes)
         printer.debug("Resumen actualizado: ", result)
         csv_logger.log(
             endpoint=task_name,
