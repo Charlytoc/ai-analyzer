@@ -141,10 +141,9 @@ def clean_reasoning_tag(text: str):
     printer.yellow(f"🔍 Reasoning content: {text[end_index + len('</think>'):]}")
     return text[end_index + len("</think>") :].lstrip()
 
-
 def remove_h2_h3_h4_questions(text: str) -> str:
-    # Elimina líneas que sean solo un encabezado (##, ###, ####) seguido de una pregunta
-    pattern = r"^(#{2,4})\s*¿[^?]+\?\s*$"
+    # Elimina líneas que sean solo un encabezado (##, ###, ####) seguido de una pregunta, opcionalmente en negrita
+    pattern = r"^(#{2,4})\s*(\*\*|__)?\s*¿[^?]+\?\s*(\*\*|__)?\s*$"
     return re.sub(pattern, "", text, flags=re.MULTILINE).strip()
 
 
