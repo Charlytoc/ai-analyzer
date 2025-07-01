@@ -337,6 +337,20 @@ def generate_sentence_brief(
     return response
 
 
+def was_rejected(response: str) -> tuple[str, bool]:
+    """
+    Busca si la respuesta contiene alguna de las etiquetas de rechazo.
+    Si existe, las elimina y retorna el texto limpio y True.
+    Si no, retorna el texto original y False.
+    """
+    tags = ["<REJECTED />", "<rejected />", "<rechazado />"]
+    found = any(tag in response for tag in tags)
+    if found:
+        for tag in tags:
+            response = response.replace(tag, "")
+    return response, found
+
+
 def update_system_prompt(previous_messages: list[dict], new_system_prompt: str):
 
     for message in previous_messages:
@@ -381,13 +395,17 @@ def update_sentence_brief(hash: str, sentence: str, changes: str):
 
     with open("last_editor_response.txt", "w") as f:
         f.write(response)
-        
-    response = clean_markdown_block(response)
+
     response = clean_reasoning_tag(response)
+    _, rejected = was_rejected(response)
+    if rejected:
+        printer.yellow("🔍 La respuesta fue rechazada por la IA.")
+
+    response = clean_markdown_block(response)
+
     printer.yellow(f"🔍 Respuesta final al reescribir la sentencia: {response}")
     redis_cache.set(f"sentence_brief:{hash}", response, ex=EXPIRATION_TIME)
     return response
-
 
 def generate_id(text: str) -> str:
     return hashlib.md5(text.encode("utf-8")).hexdigest()
