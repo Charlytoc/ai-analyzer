@@ -24,13 +24,13 @@ Realiza los cambios y da tu respuesta. No hagas nada que no se te haya pedido, e
 Retorna únicamente la sentencia ciudadana con los cambios propuestos por el usuario en formato markdown en caso de que no haya rechazo. Algo como:
 
 ```markdown
-{resultado}
+{la nueva sentencia ciudadana con los cambios realizados}
 ```
 
-Y si debes rechazar la solicitud, incluye la tag de xml: <REJECTED /> al final de dar tu explicación dentro del markdown para decirle al usuario por qué la rechazas, algo como:
+Si debes rechazar la solicitud, incluye la tag de xml: <REJECTED /> al final de dar tu explicación dentro del markdown para decirle al usuario por qué la rechazas, algo como:
 
 ```markdown
-{motivo de rechazo}
+{explica al usuario el motivo de rechazo}
 
 <REJECTED />
 ```
