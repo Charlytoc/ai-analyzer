@@ -63,9 +63,6 @@ def generate_brief_task(
             task_traceback += (
                 f"Después de cortar: {len(json.dumps(messages))} caracteres\n"
             )
-        # Save the messages to a file
-        with open("messages.json", "w") as f:
-            json.dump(messages, f)
 
         prompt = messages[-1]["content"] + " " + messages[-2]["content"]
 
@@ -78,7 +75,7 @@ def generate_brief_task(
             messages = cut_user_message(
                 messages, N_CHARACTERS_TO_CUT * (self.request.retries + 1)
             )
-        
+
         sentence_brief = generate_sentence_brief(messages, messages_hash)
         resumen = format_response(
             sentence_brief, False, messages_hash, n_documents, n_images
@@ -114,7 +111,7 @@ def generate_brief_task(
     retry_kwargs={"countdown": 10},
     retry_backoff=True,
     bind=True,
-    max_retries=4,
+    max_retries=5,
 )
 def update_brief_task(self, messages_hash: str, sentence: str, changes: str) -> dict:
     task_name = "update_sentence_brief"

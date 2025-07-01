@@ -1,7 +1,7 @@
 import json
 
 import traceback
-from fastapi import APIRouter, UploadFile, File, Form
+from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import JSONResponse
 
 import shutil
@@ -15,11 +15,10 @@ from server.utils.printer import Printer
 from server.utils.redis_cache import RedisCache
 from server.utils.processor import (
     format_messages,
-    upsert_feedback_in_vector_store,
+    upsert_feedback_in_redis,
     hasher,
     EXPIRATION_TIME,
-    format_response,
-    generate_sentence_brief,
+    validate_attachments,
 )
 from server.ai.ai_interface import get_warning_text
 from server.utils.csv_logger import CSVLogger
@@ -87,42 +86,6 @@ async def get_sentence_brief_route(hash: str):
     )
 
 
-class SentenceUpdatePayload(BaseModel):
-    sentence: str
-
-
-@router.put("/sentencia/{hash}")
-async def update_sentence_brief_route(hash: str, payload: SentenceUpdatePayload):
-    try:
-        redis_cache.set(f"sentence_brief:{hash}", payload.sentence, ex=EXPIRATION_TIME)
-
-        csv_logger.log(
-            "PUT /sentencia/{hash}",
-            200,
-            hash,
-            "Sentencia ciudadana actualizada con éxito.",
-            exit_status=0,
-        )
-        return {
-            "status": "SUCCESS",
-            "message": "Sentencia ciudadana actualizada con éxito.",
-            "sentence": payload.sentence,
-        }
-    except Exception as e:
-        printer.error(f"❌ Error al actualizar la sentencia ciudadana: {e}")
-        csv_logger.log(
-            "PUT /sentencia/{hash}",
-            500,
-            hash,
-            f"Error al actualizar la sentencia ciudadana: {e}",
-            exit_status=1,
-        )
-        raise HTTPException(
-            status_code=500,
-            detail={"status": "ERROR", "message": str(e)},
-        )
-
-
 class SentenceRequestChangesPayload(BaseModel):
     sentence: str
     changes: str
@@ -144,8 +107,6 @@ async def request_changes_route(hash: str, payload: SentenceRequestChangesPayloa
         printer.yellow("🔄 Actualizando sentencia ciudadana en otro hilo...")
 
         update_brief_task.delay(hash, sentence, payload.changes)
-
-        upsert_feedback_in_vector_store(hash, payload.changes)
 
         csv_logger.log(
             "POST /sentencia/{hash}/request-changes",
@@ -178,11 +139,34 @@ async def request_changes_route(hash: str, payload: SentenceRequestChangesPayloa
         )
 
 
+class FeedbackRequest(BaseModel):
+    hash: str
+    feedback: str
+
+
+@router.post("/feedback")
+async def feedback_route(payload: FeedbackRequest):
+    try:
+        upsert_feedback_in_redis(payload.feedback)
+        return JSONResponse(
+            content={
+                "status": "SUCCESS",
+                "message": "Feedback procesado con éxito.",
+                "hash": payload.hash,
+            },
+            status_code=200,
+        )
+    except Exception as e:
+        printer.error(f"❌ Error al procesar el feedback: {e}")
+        raise HTTPException(
+            status_code=500, detail={"status": "ERROR", "message": str(e)}
+        )
+
+
 @router.post("/generate-sentence-brief")
 async def generate_sentence_brief_route(
     images: List[UploadFile] = File([]),
     documents: List[UploadFile] = File([]),
-    extra_data: str = Form(None),
 ):
     try:
         if not images and not documents:
@@ -204,6 +188,11 @@ async def generate_sentence_brief_route(
                 },
             )
 
+        images, documents = validate_attachments(images, documents)
+
+        printer.yellow(f"🔍 Imágenes validas: {len(images)}")
+        printer.yellow(f"🔍 Documentos validos: {len(documents)}")
+
         document_paths: list[str] = []
         images_paths: list[str] = []
 
@@ -219,19 +208,7 @@ async def generate_sentence_brief_route(
             with open(document_path, "wb") as buffer:
                 shutil.copyfileobj(document.file, buffer)
 
-        # Procesar el JSON si viene
-        extra_info = {}
-        if extra_data:
-            try:
-                extra_info = json.loads(extra_data)
-                printer.blue(extra_info, "Información adicional recibida")
-            except json.JSONDecodeError:
-                printer.error("❌ Error al decodificar el JSON enviado en extra_data")
-
-        use_cache = extra_info.get("use_cache", DEFAULT_CACHE_BEHAVIOR)
-        # use_cache = DEFAULT_CACHE_BEHAVIOR
-        process_async = extra_info.get("async", True)
-        messages = format_messages(document_paths, images_paths)
+        messages, complete_text = format_messages(document_paths, images_paths)
 
         messages_json = json.dumps(messages, sort_keys=True, indent=4)
         messages_hash = hasher(messages_json)
@@ -245,73 +222,16 @@ async def generate_sentence_brief_route(
         for document_path in document_paths:
             os.remove(document_path)
 
-        if use_cache:
-            cached_response = redis_cache.get(f"sentence_brief:{messages_hash}")
-            if cached_response:
-                printer.green(f"👀 Sentencia ciudadana cacheada: {messages_hash}")
-
-                response = format_response(
-                    cached_response,
-                    True,
-                    messages_hash,
-                    len(document_paths),
-                    len(images_paths),
-                )
-                csv_logger.log(
-                    "POST /generate-sentence-brief",
-                    200,
-                    messages_hash,
-                    "Sentencia ciudadana obtenida de caché.",
-                    exit_status=0,
-                )
-                return response
-        else:
-            printer.yellow(
-                f"🔍 Eliminando la sentencia ciudadana de la caché si existe: {messages_hash}"
-            )
-            redis_cache.delete(f"sentence_brief:{messages_hash}")
-
         printer.yellow(
-            f"🔍 No se encontró la sentencia ciudadana en cache: {messages_hash}"
+            f"🔄 Enviando tarea de generación de sentencia ciudadana a cola de tareas, HASH: {messages_hash}"
+        )
+        generate_brief_task.delay(
+            messages,
+            messages_hash,
+            len(document_paths),
+            len(images_paths),
         )
 
-        if process_async:
-            printer.yellow(
-                f"🔄 Enviando tarea de generación de sentencia ciudadana a cola de tareas, HASH: {messages_hash}"
-            )
-            generate_brief_task.delay(
-                messages,
-                messages_hash,
-                len(document_paths),
-                len(images_paths),
-            )
-        else:
-            result = generate_sentence_brief(
-                messages,
-                messages_hash,
-            )
-
-            redis_cache.set(
-                f"sentence_brief:{messages_hash}", result, ex=EXPIRATION_TIME
-            )
-
-            csv_logger.log(
-                "POST /generate-sentence-brief",
-                200,
-                messages_hash,
-                "Sentencia ciudadana generada con éxito de forma síncrona.",
-                exit_status=0,
-            )
-            return JSONResponse(
-                content=format_response(
-                    result,
-                    False,
-                    messages_hash,
-                    len(document_paths),
-                    len(images_paths),
-                ),
-                status_code=200,
-            )
         printer.green(
             f"Sentencia ciudadana en proceso de generación en segundo plano, HASH: {messages_hash}"
         )
@@ -329,6 +249,7 @@ async def generate_sentence_brief_route(
                 "status": "QUEUED",
                 "message": "Sentencia ciudadana en cola...",
                 "hash": messages_hash,
+                "text_from_all_documents": complete_text,
             },
             status_code=201,
         )
@@ -336,6 +257,13 @@ async def generate_sentence_brief_route(
         tb = traceback.format_exc()
         printer.error(f"❌ Error al generar la sentencia ciudadana: {e}")
         printer.error(tb)
+        printer.error("🔍 Eliminando archivos temporales...")
+
+        for image_path in images_paths:
+            os.remove(image_path)
+        for document_path in document_paths:
+            os.remove(document_path)
+
         raise HTTPException(
             status_code=500,
             detail={"status": "ERROR", "message": str(e)},

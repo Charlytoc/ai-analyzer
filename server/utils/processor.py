@@ -1,6 +1,5 @@
 import os
 import hashlib
-import json
 
 import re
 import uuid
@@ -17,13 +16,15 @@ from server.ai.ai_interface import (
     get_system_editor_prompt,
     get_warning_text,
 )
+from fastapi import UploadFile
+from typing import List, Tuple
+
 from server.utils.image_reader import ImageReader
 from server.ai.vector_store import get_chroma_client
 from server.utils.detectors import is_spanish
 
 
 EXPIRATION_TIME = 60 * 60 * 24  # 24 horas
-# LIMIT_CHARACTERS_FOR_TEXT = int(os.getenv("CONTEXT_WINDOW_SIZE", 10000))
 LIMIT_CHARACTERS_FOR_TEXT = 10000
 
 N_CHARACTERS_FOR_FEEDBACK_VECTORIZATION = 3000
@@ -141,10 +142,69 @@ def clean_reasoning_tag(text: str):
     printer.yellow(f"🔍 Reasoning content: {text[end_index + len('</think>'):]}")
     return text[end_index + len("</think>") :].lstrip()
 
-def remove_h2_h3_h4_questions(text: str) -> str:
-    # Elimina líneas que sean solo un encabezado (##, ###, ####) seguido de una pregunta, opcionalmente en negrita
-    pattern = r"^(#{2,4})\s*(\*\*|__)?\s*¿[^?]+\?\s*(\*\*|__)?\s*$"
-    return re.sub(pattern, "", text, flags=re.MULTILINE).strip()
+
+def remove_h2_h6_questions_and_paragraph_questions(text: str) -> str:
+    header_pattern = r"^(#{2,6})\s*(\*\*|__)?\s*¿[^?]+\?\s*(\*\*|__)?\s*$"
+    paragraph_pattern = r"^(\*\*|__)?\s*¿[^?]+\?\s*(\*\*|__)?\s*$"
+
+    text = re.sub(header_pattern, "", text, flags=re.MULTILINE)
+    text = re.sub(paragraph_pattern, "", text, flags=re.MULTILINE)
+    return text.strip()
+
+
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"}
+
+DOCUMENT_EXTENSIONS = {".pdf", ".docx", ".md"}
+
+
+def get_extension(filename: str) -> str:
+    return os.path.splitext(filename)[1].lower()
+
+
+def validate_attachments(
+    images: List[UploadFile], documents: List[UploadFile]
+) -> Tuple[List[UploadFile], List[UploadFile]]:
+    """
+    Clasifica y valida archivos recibidos como imágenes y documentos.
+    Devuelve dos listas: (imagenes_validas, documentos_validos).
+    Lanza HTTPException si encuentra una extensión no permitida.
+    """
+    valid_images = []
+    valid_documents = []
+
+    # Procesa archivos enviados como imágenes
+    for file in images:
+        ext = get_extension(file.filename)
+        if ext in IMAGE_EXTENSIONS:
+            valid_images.append(file)
+        elif ext in DOCUMENT_EXTENSIONS:
+            valid_documents.append(file)
+        else:
+            printer.error(
+                f"❌ Extensión no permitida en archivo, archivo ignorado: {file.filename}"
+            )
+            # raise HTTPException(
+            #     status_code=400,
+            #     detail=f"Extensión no permitida en archivo: {file.filename}"
+            # )
+
+    # Procesa archivos enviados como documentos
+    for file in documents:
+        ext = get_extension(file.filename)
+        if ext in DOCUMENT_EXTENSIONS:
+            valid_documents.append(file)
+        elif ext in IMAGE_EXTENSIONS:
+            valid_images.append(file)
+        else:
+            printer.error(
+                f"❌ Extensión no permitida en archivo, archivo ignorado: {file.filename}"
+            )
+            # raise HTTPException(
+            #     status_code=400,
+            #     detail=f"Extensión no permitida en archivo: {file.filename}"
+            # )
+
+    return valid_images, valid_documents
 
 
 def read_documents(document_paths: list[str]):
@@ -156,34 +216,28 @@ def read_documents(document_paths: list[str]):
         max_characters_per_document = LIMIT_CHARACTERS_FOR_TEXT
     document_reader = DocumentReader()
 
-    text_from_all_documents = ""
+    complete_text = ""
+    limited_text = ""
     for document_path in document_paths:
         document_text = document_reader.read(document_path)
         printer.green(f"🔍 Documento leído: {document_path}")
         printer.yellow(f"🔍 Inicio del documento: {document_text[:200]}")
 
-        # with open(
-        #     f"uploads/documents/read/{os.path.basename(document_path)}.txt",
-        #     "w",
-        #     encoding="utf-8",
-        # ) as f:
-        #     f.write(document_text)
-
         document_hash = hasher(document_text)
 
         truncated = document_text[:max_characters_per_document]
 
+        complete_text += f"<document_text name='{document_path}'>: \n{document_text}\n </document_text>"
+
         if len(truncated) == len(document_text):
             printer.yellow(f"🔍 Se agrega todo el documento: {document_path}")
-            text_from_all_documents += f"<document_text name='{document_path}'>: \n{document_text}\n </document_text>"
+            limited_text += f"<document_text name='{document_path}'>: \n{document_text}\n </document_text>"
         else:
             printer.yellow(
                 f"🔍 Se agrega parte del documento y el resto es vectorizado: {document_path}"
             )
-            text_from_all_documents += f"<document_text name='{document_path}'>: \n{truncated}\n </document_text>"
-            printer.yellow(
-                f"🔍 Caracteres antes de vectorizar: {len(text_from_all_documents)}"
-            )
+            limited_text += f"<document_text name='{document_path}'>: \n{truncated}\n </document_text>"
+            printer.yellow(f"🔍 Caracteres antes de vectorizar: {len(limited_text)}")
             created = chroma_client.get_collection_or_none(f"doc_{document_hash}")
             if not created:
                 printer.blue(
@@ -200,12 +254,10 @@ def read_documents(document_paths: list[str]):
 
             faq_results = get_faq_results(document_hash)
             printer.yellow(f"🔍 FAQ results length: {len(faq_results)}")
-            text_from_all_documents += f"<faq_results for_document='{document_path}'>: {faq_results}</faq_results>"
-            printer.yellow(
-                f"🔍 Caracteres después de vectorizar: {len(text_from_all_documents)}"
-            )
+            limited_text += f"<faq_results for_document='{document_path}'>: {faq_results}</faq_results>"
+            printer.yellow(f"🔍 Caracteres después de vectorizar: {len(limited_text)}")
 
-    return text_from_all_documents
+    return limited_text, complete_text
 
 
 def read_images(images_paths: list[str]):
@@ -230,15 +282,14 @@ def format_messages(document_paths: list[str], images_paths: list[str]):
     if len(get_faq_questions()) > 0:
         system_prompt = system_prompt.replace("{{faq}}", "\n".join(get_faq_questions()))
 
-    text_from_all_documents = read_documents(document_paths)
+    text_from_all_documents, complete_text = read_documents(document_paths)
     text_from_all_documents += read_images(images_paths)
 
     user_message_text = f"# Estas son las fuentes de información disponibles para escribir la sentencia:\n\n{text_from_all_documents}"
 
-    feedback_text = get_feedback_from_vector_store(user_message_text)
+    feedback_text = get_feedback_from_redis(n_results=20)
 
     if feedback_text:
-        printer.yellow("🔍 Feedback encontrado, se agrega al prompt del sistema...")
         system_prompt = system_prompt.replace(
             "{{feedback}}",
             f"{feedback_text}",
@@ -252,7 +303,7 @@ def format_messages(document_paths: list[str], images_paths: list[str]):
         }
     )
 
-    return messages
+    return messages, complete_text
 
 
 def generate_sentence_brief(
@@ -269,14 +320,14 @@ def generate_sentence_brief(
     response = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
     response = clean_markdown_block(response)
     response = clean_reasoning_tag(response)
-    response = remove_h2_h3_h4_questions(response)
+    response = remove_h2_h6_questions_and_paragraph_questions(response)
     if not is_spanish(response[:150]):
         printer.yellow("🔍 La respuesta no está en español, traduciendo...")
         printer.yellow(f"🔍 Respuesta original: {response}")
         response = translate_to_spanish(response)
         response = clean_markdown_block(response)
         response = clean_reasoning_tag(response)
-        response = remove_h2_h3_h4_questions(response)
+        response = remove_h2_h6_questions_and_paragraph_questions(response)
     else:
         printer.green("🔍 La respuesta ya está en español en el primer intento.")
 
@@ -342,58 +393,32 @@ def generate_random_id():
     return str(uuid.uuid4())
 
 
-def get_user_message_partial_text(messages: list[dict]):
-    for message in messages:
-        if message["role"] == "user":
-            return message["content"][:N_CHARACTERS_FOR_FEEDBACK_VECTORIZATION]
-    return ""
-
-
-def upsert_feedback_in_vector_store(hash: str, feedback: str):
-    chroma_client = get_chroma_client()
+def upsert_feedback_in_redis(feedback: str):
+    key = "all_feedbacks"
     try:
-        previous_messages = redis_cache.get(f"messages_input:{hash}")
-        previous_messages = json.loads(previous_messages)
-        partial_text = get_user_message_partial_text(previous_messages)
-
-        if not partial_text:
-            raise ValueError("No se encontró el mensaje del usuario.")
-
-        chroma_client.upsert_chunk(
-            collection_name="sentence_feedbacks",
-            chunk_text=partial_text,
-            chunk_id=f"feedback_{generate_random_id()}",
-            metadata={"feedback": feedback},
-        )
-
-        printer.green(f"💾 Feedback guardado en vector store: {feedback}")
-
+        redis_cache.rpush(key, feedback)
+        printer.green(f"💾 Feedback guardado en Redis: {feedback}")
         return True
     except Exception as e:
-        printer.error(f"❌ Error al guardar el feedback en el vector store: {e}")
+        printer.error(f"❌ Error al guardar el feedback en Redis: {e}")
         return False
 
 
-def get_feedback_from_vector_store(documents_text: str):
-    chroma_client = get_chroma_client()
-    trimmed_text = documents_text[:N_CHARACTERS_FOR_FEEDBACK_VECTORIZATION]
+
+def get_feedback_from_redis(n_results: int = 10):
+    key = "all_feedbacks"
     try:
-        printer.blue("🔍 Buscando feedback en vector store...")
-        chunks = chroma_client.get_results(
-            collection_name="sentence_feedbacks",
-            query_texts=[trimmed_text],
-            n_results=10,
-        )
-
-        feedbacks = []
-        for i in range(len(chunks["metadatas"])):
-            feedback = chunks["metadatas"][i][0]["feedback"]
-            feedbacks.append(feedback)
-
-        printer.green(f"🔍 Feedback encontrado: {len(feedbacks)} feedbacks")
+        printer.blue("🔍 Buscando feedbacks en Redis...")
+        # Obtener los últimos n_results feedbacks
+        feedbacks = redis_cache.lrange(key, -n_results, -1)
+        # Redis devuelve bytes, decodifica si es necesario
+        feedbacks = [
+            fb.decode("utf-8") if isinstance(fb, bytes) else fb for fb in feedbacks
+        ]
+        printer.green(f"🔍 Feedbacks encontrados: {len(feedbacks)} feedbacks")
         return "\n".join(feedbacks)
     except Exception as e:
-        printer.error(f"❌ Error al obtener el feedback del vector store: {e}")
+        printer.error(f"❌ Error al obtener feedbacks de Redis: {e}")
         return ""
 
 

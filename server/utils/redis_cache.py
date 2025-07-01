@@ -27,7 +27,6 @@ class RedisCache:
         self.client.set(key, value, ex=ex)
 
     def delete(self, key: str) -> None:
-        print(f"🔍 Borrando clave: {key} del caché")
         self.client.delete(key)
 
     def flush_all(self):
@@ -44,3 +43,21 @@ class RedisCache:
 
     def hgetall(self, name: str) -> dict:
         return self.client.hgetall(name)
+
+    def rpush(self, key: str, value: str) -> None:
+        self.client.rpush(key, value)
+
+    def lrange(self, key: str, start: int, end: int) -> list[str]:
+        return self.client.lrange(key, start, end)
+
+    def lpop(self, key: str) -> str | None:
+        return self.client.lpop(key)
+
+    def lset(self, key: str, index: int, value: str) -> None:
+        self.client.lset(key, index, value)
+
+    def lrem(self, key: str, count: int, value: str) -> None:
+        self.client.lrem(key, count, value)
+
+    def llen(self, key: str) -> int:
+        return self.client.llen(key)
