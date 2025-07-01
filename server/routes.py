@@ -168,6 +168,7 @@ async def generate_sentence_brief_route(
     images: List[UploadFile] = File([]),
     documents: List[UploadFile] = File([]),
 ):
+    tb = ""
     try:
         if not images and not documents:
             printer.error(
@@ -218,9 +219,17 @@ async def generate_sentence_brief_route(
         )
 
         for image_path in images_paths:
-            os.remove(image_path)
+            try:
+                os.remove(image_path)
+            except Exception as e:
+                tb += f"❌ Error al eliminar la imagen: {e}\n"
+                printer.error(f"❌ Error al eliminar la imagen: {e}")
         for document_path in document_paths:
-            os.remove(document_path)
+            try:
+                os.remove(document_path)
+            except Exception as e:
+                tb += f"❌ Error al eliminar el documento: {e}\n"
+                printer.error(f"❌ Error al eliminar el documento: {e}")
 
         printer.yellow(
             f"🔄 Enviando tarea de generación de sentencia ciudadana a cola de tareas, HASH: {messages_hash}"
@@ -235,12 +244,17 @@ async def generate_sentence_brief_route(
         printer.green(
             f"Sentencia ciudadana en proceso de generación en segundo plano, HASH: {messages_hash}"
         )
+        message_to_log = (
+            "Sentencia ciudadana en cola..." + "\nTRACEBACK: " + tb
+            if tb
+            else "Sentencia ciudadana en cola..."
+        )
 
         csv_logger.log(
             "POST /generate-sentence-brief",
             201,
             messages_hash,
-            "Sentencia ciudadana en cola...",
+            message_to_log,
             exit_status=0,
         )
 
@@ -260,9 +274,21 @@ async def generate_sentence_brief_route(
         printer.error("🔍 Eliminando archivos temporales...")
 
         for image_path in images_paths:
-            os.remove(image_path)
+            try:
+                os.remove(image_path)
+            except Exception as e:
+                tb += f"❌ Error al eliminar la imagen: {e}\n"
+                tb += "Borrar manualmente si es necesario\n"
+                printer.error(f"❌ Error al eliminar la imagen: {e}")
         for document_path in document_paths:
-            os.remove(document_path)
+            try:
+                os.remove(document_path)
+            except Exception as e:
+                tb += f"❌ Error al eliminar el documento: {e}\n"
+                tb += "Borrar manualmente si es necesario\n"
+                printer.error(
+                    f"❌ Error al eliminar el documento: {e} Borrar manualmente si es necesario"
+                )
 
         raise HTTPException(
             status_code=500,
