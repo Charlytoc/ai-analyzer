@@ -29,6 +29,9 @@ LIMIT_CHARACTERS_FOR_TEXT = 10000
 
 N_CHARACTERS_FOR_FEEDBACK_VECTORIZATION = 3000
 
+DEBUG_MODE = os.getenv("DEBUG_MODE", "false").lower() == "true"
+
+
 printer = Printer("ROUTES")
 redis_cache = RedisCache()
 
@@ -257,6 +260,10 @@ def read_documents(document_paths: list[str]):
             limited_text += f"<faq_results for_document='{document_path}'>: {faq_results}</faq_results>"
             printer.yellow(f"🔍 Caracteres después de vectorizar: {len(limited_text)}")
 
+    if DEBUG_MODE:
+        with open("last_complete_text.txt", "w") as f:
+            f.write(complete_text)
+
     return limited_text, complete_text
 
 
@@ -318,6 +325,10 @@ def generate_sentence_brief(
     )
 
     response = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
+    if DEBUG_MODE:
+        with open("last_response_before_cleaning.txt", "w") as f:
+            f.write(response)
+            
     response = clean_markdown_block(response)
     response = clean_reasoning_tag(response)
     response = remove_h2_h6_questions_and_paragraph_questions(response)
@@ -393,8 +404,9 @@ def update_sentence_brief(hash: str, sentence: str, changes: str):
         model=os.getenv("MODEL", "gemma3"),
     )
 
-    with open("last_editor_response.txt", "w") as f:
-        f.write(response)
+    if DEBUG_MODE:
+        with open("last_editor_response_before_cleaning.txt", "w") as f:
+            f.write(response)
 
     response = clean_reasoning_tag(response)
     _, rejected = was_rejected(response)
@@ -406,6 +418,7 @@ def update_sentence_brief(hash: str, sentence: str, changes: str):
     printer.yellow(f"🔍 Respuesta final al reescribir la sentencia: {response}")
     redis_cache.set(f"sentence_brief:{hash}", response, ex=EXPIRATION_TIME)
     return response
+
 
 def generate_id(text: str) -> str:
     return hashlib.md5(text.encode("utf-8")).hexdigest()
