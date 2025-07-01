@@ -378,6 +378,10 @@ def update_sentence_brief(hash: str, sentence: str, changes: str):
         messages=messages,
         model=os.getenv("MODEL", "gemma3"),
     )
+
+    with open("last_editor_response.txt", "w") as f:
+        f.write(response)
+        
     response = clean_markdown_block(response)
     response = clean_reasoning_tag(response)
     printer.yellow(f"🔍 Respuesta final al reescribir la sentencia: {response}")
@@ -402,7 +406,6 @@ def upsert_feedback_in_redis(feedback: str):
     except Exception as e:
         printer.error(f"❌ Error al guardar el feedback en Redis: {e}")
         return False
-
 
 
 def get_feedback_from_redis(n_results: int = 10):

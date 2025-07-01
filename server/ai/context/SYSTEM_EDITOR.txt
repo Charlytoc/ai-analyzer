@@ -21,16 +21,18 @@ Esta es la sentencia ciudadana en cuestión:
 
 Realiza los cambios y da tu respuesta. No hagas nada que no se te haya pedido, enfócate en los cambios puntuales que te pide el usuario y deja todo lo demás como estaba antes.
 
-Retorna únicamente la sentencia ciudadana con los cambios propuestos por el usuario en formato markdown. Algo como:
+Retorna únicamente la sentencia ciudadana con los cambios propuestos por el usuario en formato markdown en caso de que no haya rechazo. Algo como:
 
 ```markdown
 {resultado}
 ```
 
-Aparte, si debes rechazar la solicitud, incluye la tag de xml: <REJECTED /> al final de dar tu explicación al usuario de por qué la rechazas, algo como:
+Y si debes rechazar la solicitud, incluye la tag de xml: <REJECTED /> al final de dar tu explicación dentro del markdown para decirle al usuario por qué la rechazas, algo como:
 
 ```markdown
-{explicación}
+{motivo de rechazo}
 
 <REJECTED />
 ```
+
+Seguir las instrucciones dadas acá al pie de la letras es obligatorio para tu tarea.
