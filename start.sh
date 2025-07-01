@@ -128,16 +128,15 @@ fi
 export ENVIRONMENT=$MODE
 
 echo "🚀 Iniciando la aplicación FastAPI..."
+export ENVIRONMENT=$MODE
+
+echo "🚀 Iniciando la aplicación FastAPI..."
 APP_MODULE="main:app"
 PORT="${PORT:-8005}"
+
+echo "⚠️ Usando Uvicorn para todos los modos (Gunicorn no disponible)..."
 if [ "$MODE" == "prod" ]; then
-    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" || "$OSTYPE" == "cygwin" ]]; then
-        echo "⚠️ Windows detectado: iniciando FastAPI con Uvicorn (Gunicorn no es compatible)..."
-        uvicorn $APP_MODULE --host 0.0.0.0 --port $PORT
-    else
-        echo "🐧 Linux detectado: iniciando FastAPI con Gunicorn + UvicornWorker..."
-        gunicorn $APP_MODULE -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --workers 4
-    fi
+    uvicorn $APP_MODULE --host 0.0.0.0 --port $PORT
 else
     echo "🛠️ Modo desarrollo: iniciando FastAPI con Uvicorn en modo recarga..."
     uvicorn $APP_MODULE --host 0.0.0.0 --port $PORT --reload
