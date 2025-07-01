@@ -145,12 +145,14 @@ def clean_reasoning_tag(text: str):
     return text[end_index + len("</think>") :].lstrip()
 
 
-def remove_h2_h6_questions_and_paragraph_questions(text: str) -> str:
+def remove_unwanted_elements(text: str) -> str:
     header_pattern = r"^(#{2,6})\s*(\*\*|__)?\s*¿[^?]+\?\s*(\*\*|__)?\s*$"
     paragraph_pattern = r"^(\*\*|__)?\s*¿[^?]+\?\s*(\*\*|__)?\s*$"
+    hr_pattern = r"^\s*(?:-{3,}|_{3,}|\*{3,})\s*$"
 
     text = re.sub(header_pattern, "", text, flags=re.MULTILINE)
     text = re.sub(paragraph_pattern, "", text, flags=re.MULTILINE)
+    text = re.sub(hr_pattern, "", text, flags=re.MULTILINE)
     return text.strip()
 
 
@@ -327,17 +329,17 @@ def generate_sentence_brief(
     if DEBUG_MODE:
         with open("last_response_before_cleaning.txt", "w") as f:
             f.write(response)
-            
+
     response = clean_markdown_block(response)
     response = clean_reasoning_tag(response)
-    response = remove_h2_h6_questions_and_paragraph_questions(response)
+    response = remove_unwanted_elements(response)
     if not is_spanish(response[:150]):
         printer.yellow("🔍 La respuesta no está en español, traduciendo...")
         printer.yellow(f"🔍 Respuesta original: {response}")
         response = translate_to_spanish(response)
         response = clean_markdown_block(response)
         response = clean_reasoning_tag(response)
-        response = remove_h2_h6_questions_and_paragraph_questions(response)
+        response = remove_unwanted_elements(response)
     else:
         printer.green("🔍 La respuesta ya está en español en el primer intento.")
 
