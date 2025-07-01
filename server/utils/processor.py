@@ -142,7 +142,6 @@ def clean_reasoning_tag(text: str):
     end_index = text.find("</think>")
     if end_index == -1:
         return text
-    printer.yellow(f"🔍 Reasoning content: {text[end_index + len('</think>'):]}")
     return text[end_index + len("</think>") :].lstrip()
 
 
@@ -294,7 +293,7 @@ def format_messages(document_paths: list[str], images_paths: list[str]):
 
     user_message_text = f"# Estas son las fuentes de información disponibles para escribir la sentencia:\n\n{text_from_all_documents}"
 
-    feedback_text = get_feedback_from_redis(n_results=20)
+    feedback_text = get_feedback_from_redis(n_results=50)
 
     if feedback_text:
         system_prompt = system_prompt.replace(
@@ -411,11 +410,11 @@ def update_sentence_brief(hash: str, sentence: str, changes: str):
     response = clean_reasoning_tag(response)
     _, rejected = was_rejected(response)
     if rejected:
-        printer.yellow("🔍 La respuesta fue rechazada por la IA.")
+        printer.yellow("❌ La respuesta fue rechazada por la IA.")
 
     response = clean_markdown_block(response)
 
-    printer.yellow(f"🔍 Respuesta final al reescribir la sentencia: {response}")
+    printer.green(f"✅ Respuesta final al reescribir la sentencia: {response}")
     redis_cache.set(f"sentence_brief:{hash}", response, ex=EXPIRATION_TIME)
     return response
 
