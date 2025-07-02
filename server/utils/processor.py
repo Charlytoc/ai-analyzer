@@ -15,6 +15,7 @@ from server.ai.ai_interface import (
     get_system_prompt,
     get_system_editor_prompt,
     get_warning_text,
+    get_system_prompt_with_feedback,
 )
 from fastapi import UploadFile
 from typing import List, Tuple
@@ -315,6 +316,38 @@ def format_messages(document_paths: list[str], images_paths: list[str]):
     return messages, complete_text
 
 
+def ensure_feedback_is_applied(sentence: str):
+    printer.blue("🔍 Aplicando retroalimentación a la respuesta...")
+    ai_interface = AIInterface(
+        provider=os.getenv("PROVIDER", "ollama"),
+        api_key=os.getenv("PROVIDER_API_KEY", "asdasd"),
+        base_url=os.getenv("PROVIDER_BASE_URL", None),
+    )
+    system_prompt = get_system_prompt_with_feedback()
+    if not system_prompt:
+        raise ValueError("No se encontró el prompt del sistema.")
+
+    feedback_text = get_feedback_from_redis(n_results=100)
+    system_prompt = system_prompt.replace("{{feedback}}", feedback_text)
+    system_prompt = system_prompt.replace("{{sentence}}", sentence)
+
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {
+            "role": "user",
+            "content": "Realiza únicamente las modificaciones necesarias.",
+        },
+    ]
+    response = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
+
+    response = clean_reasoning_tag(response)
+    response = clean_markdown_block(response)
+
+    printer.green("✅ Retroalimentación aplicada a la respuesta.")
+
+    return response
+
+
 def generate_sentence_brief(
     messages: list[dict],
     sentence_hash: str,
@@ -343,6 +376,7 @@ def generate_sentence_brief(
         response = remove_unwanted_elements(response)
     else:
         printer.green("🔍 La respuesta ya está en español en el primer intento.")
+    response = ensure_feedback_is_applied(response)
 
     redis_cache.set(f"sentence_brief:{sentence_hash}", response, ex=EXPIRATION_TIME)
     printer.green(f"💾 Sentencia ciudadana guardada en cache: {sentence_hash}")

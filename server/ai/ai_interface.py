@@ -15,6 +15,7 @@ CONTEXT_DIR = os.getenv("CONTEXT_DIR", "server/ai/context")
 FAQ_FILE_PATH = os.path.join(CONTEXT_DIR, "FAQ.txt")
 SYSTEM_PROMPT_FILE_PATH = os.path.join(CONTEXT_DIR, "SYSTEM.txt")
 SYSTEM_EDITOR_PROMPT_FILE_PATH = os.path.join(CONTEXT_DIR, "SYSTEM_EDITOR.txt")
+SYSTEM_PROMPT_WITH_FEEDBACK_FILE_PATH = os.path.join(CONTEXT_DIR, "SYSTEM_FEEDBACK.txt")
 
 DEBUG_MODE = os.getenv("DEBUG_MODE", "false").lower() == "true"
 
@@ -46,6 +47,17 @@ def get_system_prompt() -> str:
         )
 
     with open(SYSTEM_PROMPT_FILE_PATH, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+@lru_cache()
+def get_system_prompt_with_feedback() -> str:
+    if not os.path.exists(SYSTEM_PROMPT_WITH_FEEDBACK_FILE_PATH):
+        raise FileNotFoundError(
+            f"Archivo de prompt del sistema con feedback no encontrado: {SYSTEM_PROMPT_WITH_FEEDBACK_FILE_PATH}"
+        )
+
+    with open(SYSTEM_PROMPT_WITH_FEEDBACK_FILE_PATH, "r", encoding="utf-8") as f:
         return f.read()
 
 
@@ -210,7 +222,7 @@ class OpenAIProvider:
         RESPONSES_DIR = os.getenv("RESPONSES_DIR", "server/ai/responses")
         # Create the directory if it doesn't exist
         os.makedirs(RESPONSES_DIR, exist_ok=True)
-        
+
         if DEBUG_MODE:
             random_id = str(uuid.uuid4())
             # Save the response to a file
