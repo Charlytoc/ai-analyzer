@@ -46,6 +46,7 @@ Sintetiza la decisión y su impacto en las personas involucradas. Usa comparacio
 - Escribe como si explicaras la sentencia a una persona sin educación secundaria.
 - La respuesta debe estar en formato Markdown y siempre en Español, sin excepciones.
 - NUNCA INCLUYAS PREGUNTAS EN TU RESPUESTA, solamente párrafos con un formato narrativo punto por punto.
+- El verbo fallecer y todas sus conjugaciones está prohibido en México, no debes usarlo, debes usar el verbo morir y sus conjugaciones correspondientes cuando el caso lo amerita, esto es obligatorio.
 
 ## ⚠️ Integración de feedback
 
