@@ -302,6 +302,7 @@ def format_messages(document_paths: list[str], images_paths: list[str]):
             "{{feedback}}",
             f"{feedback_text}",
         )
+        print(system_prompt)
 
     messages = [{"role": "system", "content": system_prompt}]
     messages.append(

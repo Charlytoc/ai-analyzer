@@ -47,7 +47,7 @@ Sintetiza la decisión y su impacto en las personas involucradas. Usa comparacio
 - La respuesta debe estar en formato Markdown y siempre en Español, sin excepciones.
 - NUNCA INCLUYAS PREGUNTAS EN TU RESPUESTA, solamente párrafos con un formato narrativo punto por punto.
 
-En el siguiente apartado tienes retroalimentación dada por los usuarios del sistema para ayudarte a escribir una correcta interpretación de la sentencia. Debes tomar en cuenta todo lo mencionado a continuación al momento de escribir el resultado final.
+En el siguiente apartado tienes retroalimentación dada por los usuarios del sistema para ayudarte a escribir una correcta interpretación de la sentencia. Debes tomar en cuenta todo lo mencionado a continuación al momento de escribir el resultado final. Tu respuesta final debe satisfacer todas las solicitudes a continuación
 
 ```feedback.txt
 {{feedback}}
