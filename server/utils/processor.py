@@ -340,8 +340,13 @@ def ensure_feedback_is_applied(sentence: str):
     ]
     response = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
 
+    _, rejected = was_rejected(response)
     response = clean_reasoning_tag(response)
     response = clean_markdown_block(response)
+
+    if rejected:
+        printer.yellow("❌ La respuesta fue rechazada por la IA.")
+        response += "\n\n<REJECTED />"
 
     printer.green("✅ Retroalimentación aplicada a la respuesta.")
 
@@ -446,11 +451,12 @@ def update_sentence_brief(hash: str, sentence: str, changes: str):
 
     response = clean_reasoning_tag(response)
     _, rejected = was_rejected(response)
-    if rejected:
-        printer.yellow("❌ La respuesta fue rechazada por la IA.")
 
     response = clean_markdown_block(response)
 
+    if rejected:
+        printer.yellow("❌ La respuesta fue rechazada por la IA.")
+        response += "\n\n<REJECTED />"
     printer.green(f"✅ Respuesta final al reescribir la sentencia: {response}")
     redis_cache.set(f"sentence_brief:{hash}", response, ex=EXPIRATION_TIME)
     return response

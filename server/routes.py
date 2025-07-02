@@ -19,6 +19,7 @@ from server.utils.processor import (
     hasher,
     EXPIRATION_TIME,
     validate_attachments,
+    was_rejected,
 )
 from server.ai.ai_interface import get_warning_text
 from server.utils.csv_logger import CSVLogger
@@ -73,14 +74,17 @@ async def get_sentence_brief_route(hash: str):
     )
 
     redis_cache.delete(f"sentence_brief:{hash}")
+    sentence, rejected = was_rejected(sentencia)
+
     return JSONResponse(
         content={
             "status": "SUCCESS",
             "message": "Sentencia ciudadana generada con éxito.",
-            "brief": sentencia,
+            "brief": sentence,
             "hash": hash,
             "warning": get_warning_text(),
             "storage_status": "DELETED",
+            "rejected": rejected,
         },
         status_code=200,
     )
