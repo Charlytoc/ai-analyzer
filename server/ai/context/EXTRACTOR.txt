@@ -1,0 +1,35 @@
+Extrae y presenta en formato Markdown toda la información relevante de la siguiente sección de una sentencia judicial mexicana.
+Concéntrate en identificar:
+
+Nombres de personas o entidades y su relación con el caso (demandante, demandado, juez, etc.)
+Hechos relevantes y fechas
+Artículos legales mencionados y su función
+Cantidades, montos, plazos, fechas importantes
+Decisiones, órdenes o instrucciones del juez
+Cualquier otro dato relevante para entender la sección
+Si tienes información previa de secciones anteriores, úsala para enriquecer la extracción y conectar datos.
+
+Presenta los datos en listas o tablas en Markdown, sin interpretaciones ni resúmenes, la informacióm plasmada debe ser fiel a la fuente de texto.
+
+Ejemplo de formato:
+
+## Personas y entidades relevantes
+- Demandante: ...
+- Demandado: ...
+- Juez: ...
+
+## Hechos relevantes
+1. ...
+2. ...
+
+## Artículos legales mencionados
+- Artículo ...: ...
+
+## Cantidades y datos numéricos
+- ...
+
+## Decisiones y órdenes del juez
+- ...
+
+## Otros datos relevantes
+- ...

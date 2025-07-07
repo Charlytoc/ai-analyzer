@@ -14,7 +14,7 @@ from fastapi import HTTPException
 from server.utils.printer import Printer
 from server.utils.redis_cache import RedisCache
 from server.utils.processor import (
-    format_messages,
+    read_sources,
     upsert_feedback_in_redis,
     hasher,
     EXPIRATION_TIME,
@@ -23,7 +23,7 @@ from server.utils.processor import (
 )
 from server.ai.ai_interface import get_warning_text
 from server.utils.csv_logger import CSVLogger
-from server.tasks import generate_brief_task, update_brief_task
+from server.tasks import update_brief_task, extractor_task
 
 csv_logger = CSVLogger()
 
@@ -74,17 +74,20 @@ async def get_sentence_brief_route(hash: str):
     )
 
     redis_cache.delete(f"sentence_brief:{hash}")
-    sentence, rejected = was_rejected(sentencia)
+    sentece_json = json.loads(sentencia)
 
     return JSONResponse(
         content={
             "status": "SUCCESS",
-            "message": "Sentencia ciudadana generada con éxito.",
-            "brief": sentence,
+            "message": sentece_json.get(
+                "message", "Sentencia ciudadana encontrada en caché."
+            ),
+            "workflow": sentece_json.get("workflow", "update"),
+            "brief": sentece_json.get("sentence", ""),
             "hash": hash,
             "warning": get_warning_text(),
             "storage_status": "DELETED",
-            "rejected": rejected,
+            "rejected": sentece_json.get("rejected", False),
         },
         status_code=200,
     )
@@ -213,14 +216,10 @@ async def generate_sentence_brief_route(
             with open(document_path, "wb") as buffer:
                 shutil.copyfileobj(document.file, buffer)
 
-        messages, complete_text = format_messages(document_paths, images_paths)
+        complete_text = read_sources(document_paths, images_paths)
+        source_hash = hasher(complete_text)
 
-        messages_json = json.dumps(messages, sort_keys=True, indent=4)
-        messages_hash = hasher(messages_json)
-
-        redis_cache.set(
-            f"messages_input:{messages_hash}", messages_json, ex=EXPIRATION_TIME
-        )
+        redis_cache.set(f"source_text:{source_hash}", complete_text, ex=EXPIRATION_TIME)
 
         for image_path in images_paths:
             try:
@@ -236,17 +235,12 @@ async def generate_sentence_brief_route(
                 printer.error(f"❌ Error al eliminar el documento: {e}")
 
         printer.yellow(
-            f"🔄 Enviando tarea de generación de sentencia ciudadana a cola de tareas, HASH: {messages_hash}"
+            f"🔄 Enviando tarea de generación de sentencia ciudadana a cola de tareas, HASH: {source_hash}"
         )
-        generate_brief_task.delay(
-            messages,
-            messages_hash,
-            len(document_paths),
-            len(images_paths),
-        )
+        extractor_task.delay(source_hash)
 
         printer.green(
-            f"Sentencia ciudadana en proceso de generación en segundo plano, HASH: {messages_hash}"
+            f"Sentencia ciudadana en proceso de generación en segundo plano, HASH: {source_hash}"
         )
         message_to_log = (
             "Sentencia ciudadana en cola..." + "\nTRACEBACK: " + tb
@@ -257,7 +251,7 @@ async def generate_sentence_brief_route(
         csv_logger.log(
             "POST /generate-sentence-brief",
             201,
-            messages_hash,
+            source_hash,
             message_to_log,
             exit_status=0,
         )
@@ -266,7 +260,7 @@ async def generate_sentence_brief_route(
             content={
                 "status": "QUEUED",
                 "message": "Sentencia ciudadana en cola...",
-                "hash": messages_hash,
+                "hash": source_hash,
                 "text_from_all_documents": complete_text,
             },
             status_code=201,

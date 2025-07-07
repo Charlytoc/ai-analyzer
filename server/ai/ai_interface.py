@@ -189,6 +189,14 @@ class OllamaProvider:
         )
         return response.message.content
 
+    def chat_structured(
+        self,
+        messages: list[dict],
+        model: str = "gemma3:1b",
+        response_format: dict | None = None,
+    ):
+        return self.client.chat(messages, model, response_format=response_format)
+
 
 def cut_user_message(previous_messages: list[dict], n_characters_to_cut: int):
     for message in previous_messages:
@@ -242,6 +250,41 @@ class OpenAIProvider:
 
         return response.choices[0].message.content
 
+    def chat_structured(
+        self,
+        messages: list[dict],
+        model: str = "gpt-4o-mini",
+        response_format: dict | None = None,
+    ):
+        printer.blue(f"Generando respuesta con el modelo: {model}")
+        response = self.client.chat.completions.create(
+            model=model,
+            messages=messages,
+            response_format=response_format,
+        )
+        RESPONSES_DIR = os.getenv("RESPONSES_DIR", "server/ai/responses")
+        # Create the directory if it doesn't exist
+        os.makedirs(RESPONSES_DIR, exist_ok=True)
+
+        if DEBUG_MODE:
+            random_id = str(uuid.uuid4())
+            # Save the response to a file
+            with open(f"{RESPONSES_DIR}/{random_id}.json", "w") as f:
+                json.dump(response.model_dump(), f)
+
+            # Save the messages to a file
+            with open(f"{RESPONSES_DIR}/{random_id}_messages.json", "w") as f:
+                json.dump(messages, f)
+
+        if response.choices[0].finish_reason == "length":
+            printer.error(
+                "El modelo dió una respuesta incompleta. Cortando el mensaje de la última conversación y reintentando."
+            )
+            messages = cut_user_message(messages, 5000)
+            return self.chat_structured(messages, model, response_format)
+
+        return response.choices[0].message
+
 
 class AIInterface:
     client: OllamaProvider | OpenAIProvider | None = None
@@ -279,6 +322,14 @@ class AIInterface:
             stream=stream,
         )
 
+    def chat_structured(
+        self,
+        messages: list[dict],
+        model: str = "gpt-4o-mini",
+        response_format: dict | None = None,
+    ):
+        return self.client.chat_structured(messages, model, response_format)
+
     def check_model(self, model: str):
         return self.client.check_model(model)
 
@@ -302,3 +353,11 @@ def tokenize_prompt(prompt: str):
     is_difference_more_than_4000 = difference > 4000
 
     return count, difference, is_difference_more_than_4000
+
+
+def get_prompt_from_file(name: str) -> str:
+    prompt_path = os.path.join(CONTEXT_DIR, name.upper() + ".txt")
+    if not os.path.exists(prompt_path):
+        raise FileNotFoundError(f"Archivo de prompt no encontrado: {prompt_path}")
+    with open(prompt_path, "r", encoding="utf-8") as f:
+        return f.read()

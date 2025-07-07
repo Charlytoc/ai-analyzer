@@ -1,15 +1,15 @@
 import traceback
-import json
 
 from server.celery_app import celery
 from server.utils.printer import Printer
 from server.utils.processor import (
     generate_sentence_brief,
     update_sentence_brief,
-    format_response,
+    sequencial_extraction,
 )
 from server.utils.csv_logger import CSVLogger
-from server.ai.ai_interface import tokenize_prompt
+
+# from server.ai.ai_interface import tokenize_prompt
 
 
 printer = Printer(name="tasks")
@@ -24,6 +24,44 @@ def cut_user_message(previous_messages: list[dict], n_characters_to_cut: int):
 
 
 @celery.task(
+    name="extractor",
+    autoretry_for=(Exception,),
+    retry_kwargs={"countdown": 10},
+    retry_backoff=True,
+    bind=True,
+)
+def extractor_task(self, source_hash: str):
+    task_name = "extractor"
+    try:
+        printer.info(f"Empezando a extraer datos del documento, HASH: {source_hash}")
+        sequencial_extraction(source_hash)
+        printer.info(
+            f"Extracción de datos completada, empezando a generar la interpretación de la sentencia ciudadana, HASH: {source_hash}"
+        )
+        csv_logger.log(
+            endpoint=task_name,
+            http_status=200,
+            hash_=source_hash,
+            message="Extracción de datos completada, empezando a generar la interpretación de la sentencia ciudadana",
+            exit_status=0,
+        )
+        generate_brief_task.delay(source_hash)
+        return "Extracción de datos completada, empezando a generar la interpretación de la sentencia ciudadana"
+    except Exception as e:
+        printer.error("Error extrayendo el texto de origen:", e)
+        tb = traceback.format_exc()
+        printer.error(tb)
+        csv_logger.log(
+            endpoint=task_name,
+            http_status=500,
+            hash_=source_hash,
+            message=str(tb),
+            exit_status=1,
+        )
+        raise
+
+
+@celery.task(
     name="generate_sentence_brief",
     autoretry_for=(Exception,),
     retry_kwargs={"countdown": 10},
@@ -33,58 +71,48 @@ def cut_user_message(previous_messages: list[dict], n_characters_to_cut: int):
 )
 def generate_brief_task(
     self,
-    messages: list,
-    messages_hash: str,
-    n_documents: int,
-    n_images: int,
+    source_hash: str,
 ) -> dict:
     task_name = "generate_sentence_brief"
-    N_CHARACTERS_TO_CUT = 5000
-    is_first_attempt = self.request.retries == 0
+    # N_CHARACTERS_TO_CUT = 5000
+    # is_first_attempt = self.request.retries == 0
     task_traceback = ""
     try:
-        printer.info(
-            f"Procesando mensajes para generar una sentencia ciudadana, intento #{self.request.retries} de {self.max_retries}"
-        )
-        task_traceback += f"Procesando mensajes para generar una sentencia ciudadana, intento #{self.request.retries} de {self.max_retries}\n"
-        if not is_first_attempt:
-            printer.info(
-                f"Cortando mensajes para reintentar la generación de una sentencia ciudadana con menos caracteres, intento #{self.request.retries} de {self.max_retries}"
-            )
-            task_traceback += f"Cortando mensajes para reintentar la generación de una sentencia ciudadana con menos caracteres, intento #{self.request.retries} de {self.max_retries}\n"
+        # printer.info(
+        #     f"Procesando mensajes para generar una sentencia ciudadana, intento #{self.request.retries} de {self.max_retries}"
+        # )
+        # task_traceback += f"Procesando mensajes para generar una sentencia ciudadana, intento #{self.request.retries} de {self.max_retries}\n"
+        # if not is_first_attempt:
+        # printer.info(
+        #     f"Cortando mensajes para reintentar la generación de una sentencia ciudadana con menos caracteres, intento #{self.request.retries} de {self.max_retries}"
+        # )
+        # task_traceback += f"Cortando mensajes para reintentar la generación de una sentencia ciudadana con menos caracteres, intento #{self.request.retries} de {self.max_retries}\n"
 
-            task_traceback += (
-                f"Antes de cortar: {len(json.dumps(messages))} caracteres\n"
-            )
-            messages = cut_user_message(
-                messages, N_CHARACTERS_TO_CUT * (self.request.retries)
-            )
-            # print(len(json.dumps(messages)), "characters after cut")
-            task_traceback += (
-                f"Después de cortar: {len(json.dumps(messages))} caracteres\n"
-            )
+        # task_traceback += f"Antes de cortar: {len(json.dumps(messages))} caracteres\n"
+        # messages = cut_user_message(
+        #     messages, N_CHARACTERS_TO_CUT * (self.request.retries)
+        # )
+        # print(len(json.dumps(messages)), "characters after cut")
+        # task_traceback += f"Después de cortar: {len(json.dumps(messages))} caracteres\n"
 
-        prompt = messages[-1]["content"] + " " + messages[-2]["content"]
+        # prompt = messages[-1]["content"] + " " + messages[-2]["content"]
 
-        count, difference, is_difference_more_than_4000 = tokenize_prompt(prompt)
-        if not is_difference_more_than_4000:
-            printer.error(
-                f"El prompt {len(prompt)} caracteres es demasiado largo y resulta en un prompt de {count} tokens, la diferencia es de {difference} tokens. Cortando el prompt."
-            )
-            task_traceback += f"El prompt {len(prompt)} caracteres es demasiado largo y resulta en un prompt de {count} tokens, la diferencia es de {difference} tokens. Cortando el prompt.\n"
-            messages = cut_user_message(
-                messages, N_CHARACTERS_TO_CUT * (self.request.retries + 1)
-            )
+        # count, difference, is_difference_more_than_4000 = tokenize_prompt(prompt)
+        # if not is_difference_more_than_4000:
+        #     printer.error(
+        #         f"El prompt {len(prompt)} caracteres es demasiado largo y resulta en un prompt de {count} tokens, la diferencia es de {difference} tokens. Cortando el prompt."
+        #     )
+        #     task_traceback += f"El prompt {len(prompt)} caracteres es demasiado largo y resulta en un prompt de {count} tokens, la diferencia es de {difference} tokens. Cortando el prompt.\n"
+        #     messages = cut_user_message(
+        #         messages, N_CHARACTERS_TO_CUT * (self.request.retries + 1)
+        #     )
 
-        sentence_brief = generate_sentence_brief(messages, messages_hash)
-        resumen = format_response(
-            sentence_brief, False, messages_hash, n_documents, n_images
-        )
-        printer.yellow("Resumen generado: ", resumen)
+
+        generate_sentence_brief(source_hash)
         csv_logger.log(
             endpoint=task_name,
             http_status=200,
-            hash_=messages_hash,
+            hash_=source_hash,
             message="Resumen generado correctamente",
             exit_status=0,
         )
@@ -98,7 +126,7 @@ def generate_brief_task(
         csv_logger.log(
             endpoint=task_name,
             http_status=500,
-            hash_=messages_hash,
+            hash_=source_hash,
             message=str(task_traceback),
             exit_status=1,
         )
@@ -113,15 +141,15 @@ def generate_brief_task(
     bind=True,
     max_retries=5,
 )
-def update_brief_task(self, messages_hash: str, sentence: str, changes: str) -> dict:
+def update_brief_task(self, sources_hash: str, sentence: str, changes: str) -> dict:
     task_name = "update_sentence_brief"
     try:
-        result = update_sentence_brief(messages_hash, sentence, changes)
+        result = update_sentence_brief(sources_hash, sentence, changes)
         printer.debug("Resumen actualizado: ", result)
         csv_logger.log(
             endpoint=task_name,
             http_status=200,
-            hash_=messages_hash,
+            hash_=sources_hash,
             message="Resumen actualizado correctamente",
             exit_status=0,
         )
@@ -133,7 +161,7 @@ def update_brief_task(self, messages_hash: str, sentence: str, changes: str) -> 
         csv_logger.log(
             endpoint=task_name,
             http_status=500,
-            hash_=messages_hash,
+            hash_=sources_hash,
             message=str(tb),
             exit_status=1,
         )
