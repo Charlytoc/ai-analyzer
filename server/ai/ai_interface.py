@@ -189,7 +189,7 @@ def cut_user_message(previous_messages: list[dict], n_characters_to_cut: int):
 class OpenAIProvider:
     def __init__(self, api_key: str, base_url: str = None):
         printer.blue(f"Using OpenAI base URL: {base_url}")
-        self.client = (OpenAI(api_key=api_key, base_url=base_url),)
+        self.client = OpenAI(api_key=api_key, base_url=base_url)
 
     def check_model(self, model: str):
         return True
