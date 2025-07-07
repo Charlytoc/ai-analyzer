@@ -1,7 +1,7 @@
 import json
 
 import traceback
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, UploadFile, File, Request
 from fastapi.responses import JSONResponse
 
 import shutil
@@ -19,13 +19,15 @@ from server.utils.processor import (
     hasher,
     EXPIRATION_TIME,
     validate_attachments,
-    was_rejected,
 )
 from server.ai.ai_interface import get_warning_text
 from server.utils.csv_logger import CSVLogger
-from server.tasks import update_brief_task, extractor_task
+from server.utils.interaction_logger import InteractionLogger
+from server.tasks import update_brief_task, extractor_task, generate_feedback_task
+
 
 csv_logger = CSVLogger()
+interaction_logger = InteractionLogger()
 
 DEFAULT_CACHE_BEHAVIOR = os.environ.get("DEFAULT_CACHE_BEHAVIOR", "false")
 if DEFAULT_CACHE_BEHAVIOR.lower().strip() == "true":
@@ -96,11 +98,20 @@ async def get_sentence_brief_route(hash: str):
 class SentenceRequestChangesPayload(BaseModel):
     sentence: str
     changes: str
+    prev_messages: str
 
 
 @router.post("/sentencia/{hash}/request-changes")
-async def request_changes_route(hash: str, payload: SentenceRequestChangesPayload):
+async def request_changes_route(
+    hash: str, payload: SentenceRequestChangesPayload, request: Request
+):
     try:
+        username = request.headers.get("username")
+        if not username:
+            raise HTTPException(
+                status_code=400,
+                detail={"status": "ERROR", "message": "Falta el header 'username'."},
+            )
         sentence = payload.sentence
         if not sentence:
             raise HTTPException(
@@ -113,7 +124,13 @@ async def request_changes_route(hash: str, payload: SentenceRequestChangesPayloa
 
         printer.yellow("🔄 Actualizando sentencia ciudadana en otro hilo...")
 
-        update_brief_task.delay(hash, sentence, payload.changes)
+        update_brief_task.delay(hash, sentence, payload.changes, payload.prev_messages)
+
+        interaction_logger.log(
+            username=username,
+            hash_=hash,
+            message=payload.changes,
+        )
 
         csv_logger.log(
             "POST /sentencia/{hash}/request-changes",
@@ -291,4 +308,57 @@ async def generate_sentence_brief_route(
         raise HTTPException(
             status_code=500,
             detail={"status": "ERROR", "message": str(e)},
+        )
+
+
+class FeedbackGenerateRequest(BaseModel):
+    hash: str
+    messages: str
+
+
+@router.post("/generate-feedback")
+async def generate_feedback_route(payload: FeedbackGenerateRequest):
+    try:
+        printer.yellow(
+            f"🔄 Enviando tarea de generación de feedback a cola de tareas, HASH: {payload.hash}"
+        )
+        generate_feedback_task.delay(payload.hash, payload.messages)
+        return JSONResponse(
+            content={
+                "status": "QUEUED",
+                "message": "Feedback en cola...",
+                "hash": payload.hash,
+            },
+        )
+    except Exception as e:
+        printer.error(f"❌ Error al generar el feedback: {e}")
+        raise HTTPException(
+            status_code=500, detail={"status": "ERROR", "message": str(e)}
+        )
+
+
+@router.get("/feedback/{hash}")
+async def get_feedback_route(hash: str):
+    try:
+        feedback = redis_cache.get(f"feedback:{hash}")
+        if not feedback:
+            raise HTTPException(
+                status_code=404,
+                detail={"status": "ERROR", "message": "No se encontró el feedback."},
+            )
+        redis_cache.delete(f"feedback:{hash}")
+        return JSONResponse(
+            content={
+                "status": "SUCCESS",
+                "message": "Feedback obtenido con éxito.",
+                "feedback": feedback,
+            },
+            status_code=200,
+        )
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        printer.error(f"❌ Error al obtener el feedback: {e}")
+        raise HTTPException(
+            status_code=500, detail={"status": "ERROR", "message": str(e)}
         )

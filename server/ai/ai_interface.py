@@ -76,24 +76,6 @@ def get_system_editor_prompt() -> str:
         return f.read()
 
 
-@lru_cache()
-def get_physical_context() -> str:
-    context_files = os.listdir("server/ai/context")
-    valid_extensions = (".md", ".txt", ".csv")
-    ignored_files = {"SYSTEM.txt", "FAQ.txt", "SYSTEM_EDITOR.txt"}
-
-    context = ""
-    for file in context_files:
-        if file.endswith(valid_extensions) and file not in ignored_files:
-            try:
-                with open(f"server/ai/context/{file}", "r", encoding="utf-8") as f:
-                    context += f'<FILE name="{file}" used_for="ai_context">\n'
-                    context += f.read()
-                    context += "</FILE>\n"
-            except Exception as e:
-                printer.error(f"Error reading file {file}: {e}")
-    return context
-
 
 DEFAULT_WARNING_TEXT = """⚠️ Aviso Importante:
 

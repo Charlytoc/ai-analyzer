@@ -11,7 +11,6 @@ from server.utils.printer import Printer
 from server.utils.redis_cache import RedisCache
 from server.ai.ai_interface import (
     AIInterface,
-    # get_physical_context,
     get_faq_questions,
     get_system_prompt,
     get_system_editor_prompt,
@@ -406,16 +405,20 @@ class UpdateResponse(BaseModel):
     )
 
 
-def update_sentence_brief(sources_hash: str, sentence: str, changes: str):
+def update_sentence_brief(
+    sources_hash: str, sentence: str, changes: str, prev_messages: str
+):
     system_editor_prompt = get_system_editor_prompt()
     messages = [
         {
             "role": "system",
-            "content": system_editor_prompt.replace("{{sentencia}}", sentence),
+            "content": system_editor_prompt.replace("{{sentencia}}", sentence).replace(
+                "{{prev_messages}}", prev_messages
+            ),
         },
         {
             "role": "user",
-            "content": f"-----\nPor favor realiza únicamente los cambios que se te indican a continuación. Debes retornar únicamente el texto correspondiente a la sentencia ciudadana con los cambios realizados. Los cambios que debes realizar son: {changes}.",
+            "content": changes,
         },
     ]
 
@@ -554,3 +557,25 @@ def sequencial_extraction(source_hash: str) -> str:
     )
 
     return cummulative_response
+
+
+def generate_feedback_from_messages(sources_hash: str, messages: str):
+    system_prompt = get_prompt_from_file("FEEDBACK_GENERATOR")
+
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": messages},
+    ]
+    ai_interface = AIInterface(
+        provider=os.getenv("PROVIDER", "ollama"),
+        api_key=os.getenv("PROVIDER_API_KEY", "asdasd"),
+        base_url=os.getenv("PROVIDER_BASE_URL", None),
+    )
+    res = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
+    printer.yellow("🔍 Feedback generado: ", res)
+    redis_cache.set(
+        f"feedback:{sources_hash}",
+        res,
+        ex=EXPIRATION_TIME,
+    )
+    return res

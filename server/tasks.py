@@ -6,6 +6,7 @@ from server.utils.processor import (
     generate_sentence_brief,
     update_sentence_brief,
     sequencial_extraction,
+    generate_feedback_from_messages,
 )
 from server.utils.csv_logger import CSVLogger
 
@@ -107,7 +108,6 @@ def generate_brief_task(
         #         messages, N_CHARACTERS_TO_CUT * (self.request.retries + 1)
         #     )
 
-
         generate_sentence_brief(source_hash)
         csv_logger.log(
             endpoint=task_name,
@@ -141,13 +141,15 @@ def generate_brief_task(
     bind=True,
     max_retries=5,
 )
-def update_brief_task(self, sources_hash: str, sentence: str, changes: str) -> dict:
+def update_brief_task(
+    self, sources_hash: str, sentence: str, changes: str, prev_messages: str
+) -> dict:
     task_name = "update_sentence_brief"
     try:
         printer.info(
             f"Actualizando la sentencia ciudadana, HASH: {sources_hash}, cambios: {changes}"
         )
-        result = update_sentence_brief(sources_hash, sentence, changes)
+        result = update_sentence_brief(sources_hash, sentence, changes, prev_messages)
         printer.debug("Resumen actualizado: ", result)
         csv_logger.log(
             endpoint=task_name,
@@ -169,3 +171,30 @@ def update_brief_task(self, sources_hash: str, sentence: str, changes: str) -> d
             exit_status=1,
         )
         raise
+
+
+@celery.task(
+    name="generate_feedback",
+    autoretry_for=(Exception,),
+    retry_kwargs={"countdown": 10},
+    retry_backoff=True,
+    bind=True,
+    max_retries=5,
+)
+def generate_feedback_task(self, sources_hash: str, messages: str):
+    task_name = "generate_feedback"
+    try:
+        result = generate_feedback_from_messages(sources_hash, messages)
+        printer.debug("Feedback generado: ", result)
+        csv_logger.log(
+            endpoint=task_name,
+            http_status=200,
+            hash_=sources_hash,
+            message="Feedback generado correctamente",
+            exit_status=0,
+        )
+        return "Feedback generado correctamente"
+    except Exception as e:
+        tb = traceback.format_exc()
+        printer.error("Error generando feedback:", e)
+        printer.error(tb)
