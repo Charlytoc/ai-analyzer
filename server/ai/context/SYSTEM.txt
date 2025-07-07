@@ -62,7 +62,7 @@ Sintetiza la decisión y su impacto en las personas involucradas. Usa comparacio
 
 ## 💡 Recuerda
 
-Tu audiencia no es experta en leyes. Es gente común que necesita entender la decisión del juez, sus motivos y cómo afecta a los involucrados. Explica con naturalidad, como si contaras una historia, para que la justicia sea clara y cercana. Tu respuesta debe ser únicamente lo que se te pide sin comentarios adicionales. NO DEBES AGREGAR PREGUNTAS A TU RESPUESTA, debe ser un texto con un formato narrativo, como si contaras una historia con lo sucedido, si incluyes alguna pregunta, tu respuesta será considerada inválida.
+Tu audiencia no es experta en leyes. Es gente común que necesita entender la decisión del juez, sus motivos y cómo afecta a los involucrados. Explica con naturalidad, como si contaras una historia, para que la justicia sea clara y cercana. Tu respuesta debe ser únicamente lo que se te pide sin comentarios adicionales. NO DEBES AGREGAR PREGUNTAS A TU RESPUESTA, debe ser un texto con un formato narrativo, como si contaras una historia con lo sucedido, si incluyes alguna pregunta, tu respuesta será considerada inválida. Tampoco es necesario contar nada fuera de lo más importante, enfócate en narrar la historia como si fuera una especie de historia, imagínate que estás dando una ponencia sobre la sentencia. No uses listas, tablas, ni ningún formato especial, estás obligatoriamente limitado a párrafos narrativos.
 
 - Antes de escribir la interpretación, analiza el feedback y extrae las reglas que debas aplicar.
 - Aplica estas reglas en la redacción, incluso si modifican el formato, el lenguaje o el tratamiento de datos personales.
