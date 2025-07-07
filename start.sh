@@ -136,7 +136,7 @@ if [ "$MODE" == "prod" ]; then
         uvicorn $APP_MODULE --host 0.0.0.0 --port $PORT
     else
         echo "🐧 Linux detectado: iniciando FastAPI con Gunicorn + UvicornWorker..."
-        gunicorn $APP_MODULE -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --workers 4
+        gunicorn $APP_MODULE -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --workers 2
     fi
 else
     echo "🛠️ Modo desarrollo: iniciando FastAPI con Uvicorn en modo recarga..."
