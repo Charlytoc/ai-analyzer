@@ -319,15 +319,19 @@ def generate_sentence_brief(
 
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": extracted_data},
+        {
+            "role": "user",
+            "content": "La siguiente es toda la información extraída de la fuentes subidas por el usuario:"
+            + extracted_data,
+        },
     ]
 
+    time.sleep(0.5)
     ai_interface = AIInterface(
         provider=os.getenv("PROVIDER", "ollama"),
         api_key=os.getenv("PROVIDER_API_KEY", "asdasd"),
         base_url=os.getenv("PROVIDER_BASE_URL", None),
     )
-    time.sleep(0.5)
 
     response = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
     if DEBUG_MODE:
