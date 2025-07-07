@@ -578,6 +578,8 @@ def generate_feedback_from_messages(sources_hash: str, messages: str):
         base_url=os.getenv("PROVIDER_BASE_URL", None),
     )
     res = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
+    res = clean_reasoning_tag(res)
+    res = clean_markdown_block(res)
     printer.yellow("🔍 Feedback generado: ", res)
     redis_cache.set(
         f"feedback:{sources_hash}",
