@@ -144,6 +144,9 @@ def generate_brief_task(
 def update_brief_task(self, sources_hash: str, sentence: str, changes: str) -> dict:
     task_name = "update_sentence_brief"
     try:
+        printer.info(
+            f"Actualizando la sentencia ciudadana, HASH: {sources_hash}, cambios: {changes}"
+        )
         result = update_sentence_brief(sources_hash, sentence, changes)
         printer.debug("Resumen actualizado: ", result)
         csv_logger.log(

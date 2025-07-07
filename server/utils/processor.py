@@ -424,6 +424,7 @@ def update_sentence_brief(sources_hash: str, sentence: str, changes: str):
         api_key=os.getenv("PROVIDER_API_KEY", "asdasd"),
         base_url=os.getenv("PROVIDER_BASE_URL", None),
     )
+    printer.yellow("🔍 Enviando mensaje al editor...")
     response = ai_interface.chat_structured(
         messages=messages,
         model=os.getenv("MODEL", "gemma3"),
@@ -436,9 +437,9 @@ def update_sentence_brief(sources_hash: str, sentence: str, changes: str):
         },
     )
 
+    printer.yellow("🔍 Respuesta del editor: ", response.content)
     update_response = UpdateResponse.model_validate_json(response.content)
 
-    printer.yellow("🔍 Respuesta del editor: ", update_response)
     if DEBUG_MODE:
         with open("last_update_response.txt", "w") as f:
             f.write(update_response.model_dump_json())
