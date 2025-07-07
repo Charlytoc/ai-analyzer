@@ -79,35 +79,6 @@ def generate_brief_task(
     # is_first_attempt = self.request.retries == 0
     task_traceback = ""
     try:
-        # printer.info(
-        #     f"Procesando mensajes para generar una sentencia ciudadana, intento #{self.request.retries} de {self.max_retries}"
-        # )
-        # task_traceback += f"Procesando mensajes para generar una sentencia ciudadana, intento #{self.request.retries} de {self.max_retries}\n"
-        # if not is_first_attempt:
-        # printer.info(
-        #     f"Cortando mensajes para reintentar la generación de una sentencia ciudadana con menos caracteres, intento #{self.request.retries} de {self.max_retries}"
-        # )
-        # task_traceback += f"Cortando mensajes para reintentar la generación de una sentencia ciudadana con menos caracteres, intento #{self.request.retries} de {self.max_retries}\n"
-
-        # task_traceback += f"Antes de cortar: {len(json.dumps(messages))} caracteres\n"
-        # messages = cut_user_message(
-        #     messages, N_CHARACTERS_TO_CUT * (self.request.retries)
-        # )
-        # print(len(json.dumps(messages)), "characters after cut")
-        # task_traceback += f"Después de cortar: {len(json.dumps(messages))} caracteres\n"
-
-        # prompt = messages[-1]["content"] + " " + messages[-2]["content"]
-
-        # count, difference, is_difference_more_than_4000 = tokenize_prompt(prompt)
-        # if not is_difference_more_than_4000:
-        #     printer.error(
-        #         f"El prompt {len(prompt)} caracteres es demasiado largo y resulta en un prompt de {count} tokens, la diferencia es de {difference} tokens. Cortando el prompt."
-        #     )
-        #     task_traceback += f"El prompt {len(prompt)} caracteres es demasiado largo y resulta en un prompt de {count} tokens, la diferencia es de {difference} tokens. Cortando el prompt.\n"
-        #     messages = cut_user_message(
-        #         messages, N_CHARACTERS_TO_CUT * (self.request.retries + 1)
-        #     )
-
         generate_sentence_brief(source_hash)
         csv_logger.log(
             endpoint=task_name,

@@ -76,7 +76,6 @@ def get_system_editor_prompt() -> str:
         return f.read()
 
 
-
 DEFAULT_WARNING_TEXT = """⚠️ Aviso Importante:
 
 El contenido mostrado, incluyendo: textos, gráficos, imágenes u otro tipo de material incluido en el sitio web denominado ‘Intérprete de Sentencias Judiciales’, tiene exclusivamente una finalidad informativa de lectura simple. Por tanto, no debe ser entendido o concebido como un sustituto de la resolución judicial; en consecuencia, el texto mostrado no tiene ningún valor legal.
@@ -190,7 +189,7 @@ def cut_user_message(previous_messages: list[dict], n_characters_to_cut: int):
 class OpenAIProvider:
     def __init__(self, api_key: str, base_url: str = None):
         printer.blue(f"Using OpenAI base URL: {base_url}")
-        self.client = OpenAI(api_key=api_key, base_url=base_url)
+        self.client = (OpenAI(api_key=api_key, base_url=base_url),)
 
     def check_model(self, model: str):
         return True

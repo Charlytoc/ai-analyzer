@@ -1,6 +1,7 @@
 import os
 import hashlib
 import json
+import time
 
 import re
 import uuid
@@ -326,6 +327,7 @@ def generate_sentence_brief(
         api_key=os.getenv("PROVIDER_API_KEY", "asdasd"),
         base_url=os.getenv("PROVIDER_BASE_URL", None),
     )
+    time.sleep(0.5)
 
     response = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
     if DEBUG_MODE:
