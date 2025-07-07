@@ -543,6 +543,7 @@ def extract_data_from_chunk(chunk: str):
         base_url=os.getenv("PROVIDER_BASE_URL", None),
     )
     response = ai_interface.chat(messages=messages, model=os.getenv("MODEL", "gemma3"))
+    response = clean_reasoning_tag(response)
     return response
 
 
