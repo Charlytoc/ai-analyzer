@@ -243,6 +243,7 @@ class OpenAIProvider:
             messages=messages,
             response_format=response_format,
         )
+        printer.blue(f"Response: {response}")
         RESPONSES_DIR = os.getenv("RESPONSES_DIR", "server/ai/responses")
         # Create the directory if it doesn't exist
         os.makedirs(RESPONSES_DIR, exist_ok=True)
@@ -336,6 +337,7 @@ def tokenize_prompt(prompt: str):
     return count, difference, is_difference_more_than_4000
 
 
+@lru_cache(maxsize=20)
 def get_prompt_from_file(name: str) -> str:
     prompt_path = os.path.join(CONTEXT_DIR, name.upper() + ".txt")
     if not os.path.exists(prompt_path):
