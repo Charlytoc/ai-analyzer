@@ -62,3 +62,10 @@ Esta es la sentencia ciudadana para responder preguntas o realizar modificacione
 {{sentencia}}
 ---
 
+
+
+CRITERIOS PARA ACEPTAR O RECHAZAR SOLICITUDES
+
+- Cualquier cambio que el usuario solicite con respecto al texto, realízado sin excepciones.
+- Si el usuario hace una pregunta relativa a la sentencia, respóndela claramente y sin tapujos.
+- Únicamente debes rechazar las solicitudes que no tengan NADA que ver con la sentencia.
